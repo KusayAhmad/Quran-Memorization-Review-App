@@ -105,7 +105,6 @@ class HomeScreenState extends State<HomeScreen> {
                 MaterialPageRoute(
                     builder: (context) => const SelectSurasScreen()),
               );
-              // If the return result is true, it means there are changes
               if (result == true) {
                 setState(() {
                   _surasFuture = _getSurasWithProgress();
@@ -128,18 +127,20 @@ class HomeScreenState extends State<HomeScreen> {
                   return Center(
                       child: Text('Error occurred: ${snapshot.error}'));
                 } else if (!snapshot.hasData || snapshot.data == null) {
-                  // If no data is available, display an appropriate message
                   return const Center(child: Text('No data available'));
                 }
 
-                // When data is confirmed to be available, use snapshot.data!
                 final suras = snapshot.data!;
+                final total = suras.fold(0, (sum, s) => sum + s.pages);
+
                 return ListView.builder(
                   itemCount: suras.length,
                   itemBuilder: (context, index) {
                     final sura = suras[index];
+                    final percentage = (sura.pages / total) * 100;
+
                     return CheckboxListTile(
-                      title: Text(sura.name),
+                      title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
                       subtitle: Text('${sura.pages} pages'),
                       value: sura.isCompleted,
                       onChanged: (value) async {
