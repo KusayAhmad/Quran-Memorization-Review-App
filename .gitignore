@@ -1,0 +1,98 @@
+# ------------------------------
+# 🛠️ General System Files
+# ------------------------------
+.DS_Store
+*.log
+*.lock
+*.pyc
+*.pyo
+*.swp
+*.tmp
+*.temp
+*.bak
+
+# ------------------------------
+# 🚀 IDE & Editor Settings
+# ------------------------------
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+*.sublime-workspace
+*.sublime-project
+
+# ------------------------------
+# 🎯 Flutter / Dart / Pub Related
+# ------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+/build/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# ------------------------------
+# 📱 Android Specific
+# ------------------------------
+android/.gradle/
+android/.idea/
+android/.settings/
+android/local.properties
+android/*.iml
+android/captures/
+android/app/build/
+android/app/debug/
+android/app/profile/
+android/app/release/
+
+# ------------------------------
+# 🍏 iOS & macOS Specific
+# ------------------------------
+ios/Pods/
+ios/Runner.xcworkspace/
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+ios/Flutter/Flutter.podspec
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/ServiceDefinitions.json
+macos/Flutter/ephemeral/
+macos/Flutter/Generated.xcconfig
+macos/Flutter/flutter_export_environment.sh
+macos/ServiceDefinitions.json
+
+# ------------------------------
+# 🌍 Web Specific
+# ------------------------------
+web/.dart_tool/
+
+# ------------------------------
+# 🐧 Linux Specific
+# ------------------------------
+linux/flutter/ephemeral/
+
+# ------------------------------
+# 🖥 Windows Specific
+# ------------------------------
+windows/flutter/ephemeral/
+
+# ------------------------------
+# 🏗 Symbolication & Obfuscation
+# ------------------------------
+app.*.symbols
+app.*.map.json
+
+# ------------------------------
+# 🔹 Miscellaneous
+# ------------------------------
+*.class
+*.jar
+*.war
+*.ear
+*.db
+*.sqlite
+*.sqlite3
+migrate_working_dir/
