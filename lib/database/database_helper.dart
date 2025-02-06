@@ -50,10 +50,11 @@ class DatabaseHelper {
     // Add a table to store selected suras
     await db.execute('''
   CREATE TABLE selected_suras (
-    id INTEGER PRIMARY KEY,
+    id INTEGER ,
     name TEXT NOT NULL,
     pages INTEGER NOT NULL,
-    reviewed BOOLEAN DEFAULT 0
+    reviewed BOOLEAN DEFAULT 0,
+    FOREIGN KEY (id) REFERENCES suras(id)
   )
 ''');
 
@@ -64,24 +65,35 @@ class DatabaseHelper {
     completed_pages INTEGER DEFAULT 0
   )
 ''');
-
-    // Insert default suras data (example)
-    await _populateDefaultSuras(db);
   }
 
-  Future<void> _populateDefaultSuras(Database db) async {
-    final suras = [
-      {'id': 1, 'name': 'الفاتحة', 'pages': 1},
-      {'id': 2, 'name': 'البقرة', 'pages': 48},
-      {'id': 3, 'name': 'آل عمران', 'pages': 27},
-      {'id': 4, 'name': 'النساء', 'pages': 29},
+// New functions to manage suras
+  Future<int> insertSura(Sura sura) async {
+    final db = await database;
+    return await db.insert(
+      tableSuras,
+      sura.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
 
-      // Add the rest of the suras...
-    ];
+  Future<int> updateSura(Sura sura) async {
+    final db = await database;
+    return await db.update(
+      tableSuras,
+      sura.toMap(),
+      where: '$columnId = ?',
+      whereArgs: [sura.id],
+    );
+  }
 
-    for (var sura in suras) {
-      await db.insert(tableSuras, sura);
-    }
+  Future<int> deleteSura(int id) async {
+    final db = await database;
+    return await db.delete(
+      tableSuras,
+      where: '$columnId = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> updateDailyProgress(
@@ -134,21 +146,21 @@ class DatabaseHelper {
         .toList();
   }
 
-Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
-  final db = await database;
-  int result = await db.update(
-    'selected_suras', // Update the table to selected_suras
-    {'reviewed': isCompleted ? 1 : 0}, // Update the column to reviewed
-    where: 'id = ?',
-    whereArgs: [suraId],
-  );
+  Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
+    final db = await database;
+    int result = await db.update(
+      'selected_suras', // Update the table to selected_suras
+      {'reviewed': isCompleted ? 1 : 0}, // Update the column to reviewed
+      where: 'id = ?',
+      whereArgs: [suraId],
+    );
 
-  if (result > 0) {
-    print('Sura with ID $suraId updated successfully');
-  } else {
-    print('Failed to update sura with ID $suraId');
+    if (result > 0) {
+      print('Sura with ID $suraId updated successfully');
+    } else {
+      print('Failed to update sura with ID $suraId');
+    }
   }
-}
 
   Future<List<int>> getCompletedSuras(DateTime date) async {
     final db = await database;

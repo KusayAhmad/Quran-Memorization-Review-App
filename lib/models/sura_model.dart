@@ -10,4 +10,12 @@ class Sura {
     required this.pages,
     this.isCompleted = false,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'pages': pages,
+    };
+  }
 }

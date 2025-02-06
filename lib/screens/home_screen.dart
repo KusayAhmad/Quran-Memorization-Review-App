@@ -140,7 +140,8 @@ class HomeScreenState extends State<HomeScreen> {
                     final percentage = (sura.pages / total) * 100;
 
                     return CheckboxListTile(
-                      title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
+                      title: Text(
+                          '${sura.name} (${percentage.toStringAsFixed(1)}%)'),
                       subtitle: Text('${sura.pages} pages'),
                       value: sura.isCompleted,
                       onChanged: (value) async {
