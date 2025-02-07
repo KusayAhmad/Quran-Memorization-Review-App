@@ -20,6 +20,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   void initState() {
     super.initState();
     _loadAllSuras();
+    _loadSelectedSuras(); // Load selected suras on initialization
   }
 
   void _loadAllSuras() async {
@@ -33,8 +34,14 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 pages: s['pages'] as int,
               ))
           .toList();
-      // عند تحميل السور يتم نسخ القائمة كاملة إلى القائمة المصفاة
       _filteredSuras = _allSuras;
+    });
+  }
+
+  void _loadSelectedSuras() async {
+    final selectedSuras = await _dbHelper.getSelectedSuras();
+    setState(() {
+      _selectedIds = selectedSuras.map((s) => s.id).toList();
     });
   }
 
@@ -79,8 +86,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 },
               ),
               TextField(
-                decoration:
-                    const InputDecoration(labelText: 'Number of Pages'),
+                decoration: const InputDecoration(labelText: 'Number of Pages'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   suraPages = int.tryParse(value) ?? 0;
@@ -111,10 +117,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   Future<void> _addSura(String name, int pages) async {
-    // الحصول على أعلى id موجود لزيادة القيمة
+    // Get the highest ID to increment the value
     final db = await _dbHelper.database;
-    final List<Map<String, dynamic>> result = await db.rawQuery(
-        'SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
+    final List<Map<String, dynamic>> result =
+        await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
     final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
         ? result[0]['MAX(id)'] as int
         : 0;
@@ -122,7 +128,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
     final newSura = Sura(id: newId, name: name, pages: pages);
     await _dbHelper.insertSura(newSura);
-    _loadAllSuras(); // إعادة تحميل السور لتحديث القائمة
+    _loadAllSuras(); // Reload surahs to update the list
   }
 
   void _showEditSuraDialog(BuildContext context, Sura sura) {
@@ -145,11 +151,9 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 },
               ),
               TextField(
-                decoration:
-                    const InputDecoration(labelText: 'Number of Pages'),
+                decoration: const InputDecoration(labelText: 'Number of Pages'),
                 keyboardType: TextInputType.number,
-                controller:
-                    TextEditingController(text: sura.pages.toString()),
+                controller: TextEditingController(text: sura.pages.toString()),
                 onChanged: (value) {
                   suraPages = int.tryParse(value) ?? 0;
                 },
@@ -167,7 +171,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               child: const Text('Update'),
               onPressed: () {
                 if (suraName.isNotEmpty && suraPages > 0) {
-                  _updateSura(Sura(id: sura.id, name: suraName, pages: suraPages));
+                  _updateSura(
+                      Sura(id: sura.id, name: suraName, pages: suraPages));
                   Navigator.of(context).pop();
                 }
               },
@@ -204,7 +209,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       ),
       body: Column(
         children: [
-          // حقل البحث
+          // Search field
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -215,7 +220,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               onChanged: _filterSuras,
             ),
           ),
-          // عرض القائمة المصفاة
+          // Display the filtered list
           Expanded(
             child: ListView.builder(
               itemCount: _filteredSuras.length,
