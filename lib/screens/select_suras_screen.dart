@@ -11,16 +11,19 @@ class SelectSurasScreen extends StatefulWidget {
 
 class SelectSurasScreenState extends State<SelectSurasScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+
   List<Sura> _allSuras = [];
   List<Sura> _filteredSuras = [];
   List<int> _selectedIds = [];
   String _searchText = '';
 
+  String _sortMode = 'asc';
+
   @override
   void initState() {
     super.initState();
     _loadAllSuras();
-    _loadSelectedSuras(); // Load selected suras on initialization
+    _loadSelectedSuras();
   }
 
   void _loadAllSuras() async {
@@ -34,7 +37,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 pages: s['pages'] as int,
               ))
           .toList();
-      _filteredSuras = _allSuras;
+
+      _filteredSuras = List.from(_allSuras);
+      if (_sortMode == 'asc') {
+        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
+      } else if (_sortMode == 'desc') {
+        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
+      }
     });
   }
 
@@ -51,6 +60,32 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       _filteredSuras = _allSuras.where((sura) {
         return sura.name.toLowerCase().contains(_searchText.toLowerCase());
       }).toList();
+      if (_sortMode == 'asc') {
+        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
+      } else if (_sortMode == 'desc') {
+        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
+      }
+    });
+  }
+
+  void _sortSuras(String sortMode) {
+    setState(() {
+      _sortMode = sortMode;
+      if (_sortMode == 'asc') {
+        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
+      } else if (_sortMode == 'desc') {
+        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
+      }
+    });
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    setState(() {
+      if (newIndex > oldIndex) {
+        newIndex -= 1;
+      }
+      final Sura movedSura = _filteredSuras.removeAt(oldIndex);
+      _filteredSuras.insert(newIndex, movedSura);
     });
   }
 
@@ -59,7 +94,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
         print(
-            'Selected suras saved: ${_selectedIds.map((id) => _allSuras.firstWhere((sura) => sura.id == id).name).toList()}');
+            'Selected suras saved: ${_selectedIds.map((id) => _allSuras.firstWhere((s) => s.id == id).name).toList()}');
       } else {
         await _dbHelper.removeSelectedSura(sura.id);
       }
@@ -117,7 +152,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   Future<void> _addSura(String name, int pages) async {
-    // Get the highest ID to increment the value
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> result =
         await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
@@ -128,7 +162,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
     final newSura = Sura(id: newId, name: name, pages: pages);
     await _dbHelper.insertSura(newSura);
-    _loadAllSuras(); // Reload surahs to update the list
+    _loadAllSuras();
   }
 
   void _showEditSuraDialog(BuildContext context, Sura sura) {
@@ -195,10 +229,125 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Widget listWidget;
+    if (_sortMode == 'manual') {
+      listWidget = ReorderableListView(
+        onReorder: _onReorder,
+        children: _filteredSuras.map((sura) {
+          bool isChecked = _selectedIds.contains(sura.id);
+          return Container(
+            key: ValueKey(sura.id),
+            child: ListTile(
+              leading: ReorderableDragStartListener(
+                index: _filteredSuras.indexOf(sura),
+                child: const Icon(Icons.drag_handle),
+              ),
+              title: Text(sura.name),
+              subtitle: Text('${sura.pages} pages'),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Checkbox(
+                    value: isChecked,
+                    onChanged: (value) {
+                      setState(() {
+                        if (value == true) {
+                          _selectedIds.add(sura.id);
+                        } else {
+                          _selectedIds.remove(sura.id);
+                        }
+                      });
+                    },
+                  ),
+                  PopupMenuButton<String>(
+                    onSelected: (String value) {
+                      if (value == 'edit') {
+                        _showEditSuraDialog(context, sura);
+                      } else if (value == 'delete') {
+                        _deleteSura(sura);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      const PopupMenuItem<String>(
+                        value: 'edit',
+                        child: Text('Edit'),
+                      ),
+                      const PopupMenuItem<String>(
+                        value: 'delete',
+                        child: Text('Delete'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
+      );
+    } else {
+      listWidget = ListView.builder(
+        itemCount: _filteredSuras.length,
+        itemBuilder: (context, index) {
+          final sura = _filteredSuras[index];
+          return CheckboxListTile(
+            title: Text(sura.name),
+            subtitle: Text('${sura.pages} pages'),
+            value: _selectedIds.contains(sura.id),
+            onChanged: (value) {
+              setState(() {
+                if (value == true) {
+                  _selectedIds.add(sura.id);
+                } else {
+                  _selectedIds.remove(sura.id);
+                }
+              });
+            },
+            secondary: PopupMenuButton<String>(
+              onSelected: (String value) {
+                if (value == 'edit') {
+                  _showEditSuraDialog(context, sura);
+                } else if (value == 'delete') {
+                  _deleteSura(sura);
+                }
+              },
+              itemBuilder: (BuildContext context) => [
+                const PopupMenuItem<String>(
+                  value: 'edit',
+                  child: Text('Edit'),
+                ),
+                const PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Text('Delete'),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Suras for Review'),
         actions: [
+          PopupMenuButton<String>(
+            onSelected: _sortSuras,
+            icon: const Icon(Icons.sort),
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'asc',
+                child: Text('Sort A-Z'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'desc',
+                child: Text('Sort Z-A'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'manual',
+                child: Text('Manual Reorder'),
+              ),
+            ],
+          ),
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
@@ -209,7 +358,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       ),
       body: Column(
         children: [
-          // Search field
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
@@ -220,50 +368,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               onChanged: _filterSuras,
             ),
           ),
-          // Display the filtered list
-          Expanded(
-            child: ListView.builder(
-              itemCount: _filteredSuras.length,
-              itemBuilder: (context, index) {
-                final sura = _filteredSuras[index];
-                return CheckboxListTile(
-                  title: Text(sura.name),
-                  subtitle: Text('${sura.pages} pages'),
-                  value: _selectedIds.contains(sura.id),
-                  onChanged: (value) {
-                    setState(() {
-                      if (value!) {
-                        _selectedIds.add(sura.id);
-                      } else {
-                        _selectedIds.remove(sura.id);
-                      }
-                    });
-                  },
-                  secondary: PopupMenuButton<String>(
-                    onSelected: (String value) {
-                      if (value == 'edit') {
-                        _showEditSuraDialog(context, sura);
-                      } else if (value == 'delete') {
-                        _deleteSura(sura);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return [
-                        const PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Text('Edit'),
-                        ),
-                        const PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Text('Delete'),
-                        ),
-                      ];
-                    },
-                  ),
-                );
-              },
-            ),
-          ),
+          Expanded(child: listWidget),
         ],
       ),
       floatingActionButton: FloatingActionButton(
