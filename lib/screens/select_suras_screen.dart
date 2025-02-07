@@ -12,7 +12,9 @@ class SelectSurasScreen extends StatefulWidget {
 class SelectSurasScreenState extends State<SelectSurasScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
   List<Sura> _allSuras = [];
+  List<Sura> _filteredSuras = [];
   List<int> _selectedIds = [];
+  String _searchText = '';
 
   @override
   void initState() {
@@ -31,6 +33,17 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 pages: s['pages'] as int,
               ))
           .toList();
+      // عند تحميل السور يتم نسخ القائمة كاملة إلى القائمة المصفاة
+      _filteredSuras = _allSuras;
+    });
+  }
+
+  void _filterSuras(String searchText) {
+    setState(() {
+      _searchText = searchText;
+      _filteredSuras = _allSuras.where((sura) {
+        return sura.name.toLowerCase().contains(_searchText.toLowerCase());
+      }).toList();
     });
   }
 
@@ -66,7 +79,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                 },
               ),
               TextField(
-                decoration: const InputDecoration(labelText: 'Number of Pages'),
+                decoration:
+                    const InputDecoration(labelText: 'Number of Pages'),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   suraPages = int.tryParse(value) ?? 0;
@@ -96,19 +110,20 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     );
   }
 
-Future<void> _addSura(String name, int pages) async {
-  // Get the highest existing id
-  final db = await _dbHelper.database;
-  final List<Map<String, dynamic>> result = await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
-  final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null) ? result[0]['MAX(id)'] as int : 0;
+  Future<void> _addSura(String name, int pages) async {
+    // الحصول على أعلى id موجود لزيادة القيمة
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> result = await db.rawQuery(
+        'SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
+    final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
+        ? result[0]['MAX(id)'] as int
+        : 0;
+    final newId = highestId + 1;
 
-  // Increment the highest id to get a new unique id
-  final newId = highestId + 1;
-
-  final newSura = Sura(id: newId, name: name, pages: pages);
-  await _dbHelper.insertSura(newSura);
-  _loadAllSuras(); // Reload suras to update the list
-}
+    final newSura = Sura(id: newId, name: name, pages: pages);
+    await _dbHelper.insertSura(newSura);
+    _loadAllSuras(); // إعادة تحميل السور لتحديث القائمة
+  }
 
   void _showEditSuraDialog(BuildContext context, Sura sura) {
     String suraName = sura.name;
@@ -124,18 +139,20 @@ Future<void> _addSura(String name, int pages) async {
             children: [
               TextField(
                 decoration: const InputDecoration(labelText: 'Sura Name'),
+                controller: TextEditingController(text: sura.name),
                 onChanged: (value) {
                   suraName = value;
                 },
-                controller: TextEditingController(text: sura.name),
               ),
               TextField(
-                decoration: const InputDecoration(labelText: 'Number of Pages'),
+                decoration:
+                    const InputDecoration(labelText: 'Number of Pages'),
                 keyboardType: TextInputType.number,
+                controller:
+                    TextEditingController(text: sura.pages.toString()),
                 onChanged: (value) {
                   suraPages = int.tryParse(value) ?? 0;
                 },
-                controller: TextEditingController(text: sura.pages.toString()),
               ),
             ],
           ),
@@ -150,8 +167,7 @@ Future<void> _addSura(String name, int pages) async {
               child: const Text('Update'),
               onPressed: () {
                 if (suraName.isNotEmpty && suraPages > 0) {
-                  _updateSura(
-                      Sura(id: sura.id, name: suraName, pages: suraPages));
+                  _updateSura(Sura(id: sura.id, name: suraName, pages: suraPages));
                   Navigator.of(context).pop();
                 }
               },
@@ -164,12 +180,12 @@ Future<void> _addSura(String name, int pages) async {
 
   Future<void> _updateSura(Sura sura) async {
     await _dbHelper.updateSura(sura);
-    _loadAllSuras(); // Reload suras to update the list
+    _loadAllSuras();
   }
 
   Future<void> _deleteSura(Sura sura) async {
     await _dbHelper.deleteSura(sura.id);
-    _loadAllSuras(); // Reload suras to update the list
+    _loadAllSuras();
   }
 
   @override
@@ -186,46 +202,64 @@ Future<void> _addSura(String name, int pages) async {
           ),
         ],
       ),
-      body: ListView.builder(
-        itemCount: _allSuras.length,
-        itemBuilder: (context, index) {
-          final sura = _allSuras[index];
-          return CheckboxListTile(
-            title: Text(sura.name),
-            subtitle: Text('${sura.pages} pages'),
-            value: _selectedIds.contains(sura.id),
-            onChanged: (value) {
-              setState(() {
-                if (value!) {
-                  _selectedIds.add(sura.id);
-                } else {
-                  _selectedIds.remove(sura.id);
-                }
-              });
-            },
-            secondary: PopupMenuButton<String>(
-              onSelected: (String value) {
-                if (value == 'edit') {
-                  _showEditSuraDialog(context, sura);
-                } else if (value == 'delete') {
-                  _deleteSura(sura);
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return [
-                  const PopupMenuItem<String>(
-                    value: 'edit',
-                    child: Text('Edit'),
+      body: Column(
+        children: [
+          // حقل البحث
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search Suras',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: _filterSuras,
+            ),
+          ),
+          // عرض القائمة المصفاة
+          Expanded(
+            child: ListView.builder(
+              itemCount: _filteredSuras.length,
+              itemBuilder: (context, index) {
+                final sura = _filteredSuras[index];
+                return CheckboxListTile(
+                  title: Text(sura.name),
+                  subtitle: Text('${sura.pages} pages'),
+                  value: _selectedIds.contains(sura.id),
+                  onChanged: (value) {
+                    setState(() {
+                      if (value!) {
+                        _selectedIds.add(sura.id);
+                      } else {
+                        _selectedIds.remove(sura.id);
+                      }
+                    });
+                  },
+                  secondary: PopupMenuButton<String>(
+                    onSelected: (String value) {
+                      if (value == 'edit') {
+                        _showEditSuraDialog(context, sura);
+                      } else if (value == 'delete') {
+                        _deleteSura(sura);
+                      }
+                    },
+                    itemBuilder: (BuildContext context) {
+                      return [
+                        const PopupMenuItem<String>(
+                          value: 'edit',
+                          child: Text('Edit'),
+                        ),
+                        const PopupMenuItem<String>(
+                          value: 'delete',
+                          child: Text('Delete'),
+                        ),
+                      ];
+                    },
                   ),
-                  const PopupMenuItem<String>(
-                    value: 'delete',
-                    child: Text('Delete'),
-                  ),
-                ];
+                );
               },
             ),
-          );
-        },
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _saveSelection,

@@ -1,7 +1,7 @@
 name: quran_review_app
 description: "A new Flutter project."
 
-publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+publish_to: 'none'
 
 version: 1.0.0+1
 
@@ -38,4 +38,4 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/icon/icon.png"
   adaptive_icon_foreground: "assets/icon/app_foreground.png"
-  adaptive_icon_background: "#ffffff"  # يمكن أن تكون صورة أيضًا
+  adaptive_icon_background: "#ffffff"
