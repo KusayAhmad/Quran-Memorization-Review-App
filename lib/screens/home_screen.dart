@@ -15,7 +15,7 @@ class HomeScreenState extends State<HomeScreen> {
   late Future<List<Sura>> _surasFuture;
   final DatabaseHelper _dbHelper = DatabaseHelper();
   double _progress = 0.0;
-  bool _completionDialogShown = false; // Add this variable
+  bool _completionDialogShown = false;
 
   @override
   void initState() {

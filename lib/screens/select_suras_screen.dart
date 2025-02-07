@@ -110,7 +110,6 @@ Future<void> _addSura(String name, int pages) async {
   _loadAllSuras(); // Reload suras to update the list
 }
 
-
   void _showEditSuraDialog(BuildContext context, Sura sura) {
     String suraName = sura.name;
     int suraPages = sura.pages;

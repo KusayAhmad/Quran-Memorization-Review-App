@@ -58,7 +58,6 @@ class DatabaseHelper {
   )
 ''');
 
-// Add a table to track daily progress
     await db.execute('''
   CREATE TABLE IF NOT EXISTS daily_progress (
     date TEXT PRIMARY KEY,
@@ -109,7 +108,6 @@ class DatabaseHelper {
     );
   }
 
-// Add these functions inside class DatabaseHelper
   Future<void> addSelectedSura(Sura sura) async {
     final db = await database;
     await db.insert(
