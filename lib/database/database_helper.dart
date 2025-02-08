@@ -15,6 +15,10 @@ class DatabaseHelper {
   static final columnDate = 'date';
   static final columnCompleted = 'completed_suras';
 
+  static final tablePreferences = 'preferences';
+  static final columnPreferenceName = 'name';
+  static final columnPreferenceValue = 'value';
+
   static Database? _database;
 
   Future<Database> get database async {
@@ -47,7 +51,7 @@ class DatabaseHelper {
         $columnCompleted TEXT NOT NULL
       )
     ''');
-    // Add a table to store selected suras
+
     await db.execute('''
   CREATE TABLE selected_suras (
     id INTEGER ,
@@ -64,9 +68,15 @@ class DatabaseHelper {
     completed_pages INTEGER DEFAULT 0
   )
 ''');
+
+    await db.execute('''
+      CREATE TABLE $tablePreferences (
+        $columnPreferenceName TEXT PRIMARY KEY,
+        $columnPreferenceValue TEXT NOT NULL
+      )
+    ''');
   }
 
-// New functions to manage suras
   Future<int> insertSura(Sura sura) async {
     final db = await database;
     return await db.insert(
@@ -157,8 +167,8 @@ class DatabaseHelper {
   Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
     final db = await database;
     int result = await db.update(
-      'selected_suras', // Update the table to selected_suras
-      {'reviewed': isCompleted ? 1 : 0}, // Update the column to reviewed
+      'selected_suras',
+      {'reviewed': isCompleted ? 1 : 0},
       where: 'id = ?',
       whereArgs: [suraId],
     );
@@ -187,5 +197,30 @@ class DatabaseHelper {
 
   String _formatDate(DateTime date) {
     return "${date.year}-${date.month}-${date.day}";
+  }
+
+  Future<String?> getPreference(String name) async {
+    final db = await database;
+    List<Map<String, dynamic>> result = await db.query(
+      tablePreferences,
+      where: '$columnPreferenceName = ?',
+      whereArgs: [name],
+    );
+    if (result.isNotEmpty) {
+      return result.first[columnPreferenceValue] as String?;
+    }
+    return null;
+  }
+
+  Future<void> setPreference(String name, String value) async {
+    final db = await database;
+    await db.insert(
+      tablePreferences,
+      {
+        columnPreferenceName: name,
+        columnPreferenceValue: value,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
   }
 }

@@ -22,8 +22,16 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   @override
   void initState() {
     super.initState();
+    _loadSortMode();
     _loadAllSuras();
     _loadSelectedSuras();
+  }
+
+  Future<void> _loadSortMode() async {
+    String? savedSortMode = await _dbHelper.getPreference('sortMode');
+    setState(() {
+      _sortMode = savedSortMode ?? 'asc';
+    });
   }
 
   void _loadAllSuras() async {
@@ -39,11 +47,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           .toList();
 
       _filteredSuras = List.from(_allSuras);
-      if (_sortMode == 'asc') {
-        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
-      } else if (_sortMode == 'desc') {
-        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
-      }
+      _sortFilteredSuras();
     });
   }
 
@@ -60,23 +64,28 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       _filteredSuras = _allSuras.where((sura) {
         return sura.name.toLowerCase().contains(_searchText.toLowerCase());
       }).toList();
-      if (_sortMode == 'asc') {
-        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
-      } else if (_sortMode == 'desc') {
-        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
-      }
+      _sortFilteredSuras();
     });
   }
 
   void _sortSuras(String sortMode) {
     setState(() {
       _sortMode = sortMode;
-      if (_sortMode == 'asc') {
-        _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
-      } else if (_sortMode == 'desc') {
-        _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
-      }
+      _saveSortMode(sortMode);
+      _sortFilteredSuras();
     });
+  }
+
+  Future<void> _saveSortMode(String sortMode) async {
+    await _dbHelper.setPreference('sortMode', sortMode);
+  }
+
+  void _sortFilteredSuras() {
+    if (_sortMode == 'asc') {
+      _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
+    } else if (_sortMode == 'desc') {
+      _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
+    }
   }
 
   void _onReorder(int oldIndex, int newIndex) {
@@ -230,101 +239,45 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   @override
   Widget build(BuildContext context) {
     Widget listWidget;
-    if (_sortMode == 'manual') {
-      listWidget = ReorderableListView(
-        onReorder: _onReorder,
-        children: _filteredSuras.map((sura) {
-          bool isChecked = _selectedIds.contains(sura.id);
-          return Container(
-            key: ValueKey(sura.id),
-            child: ListTile(
-              leading: ReorderableDragStartListener(
-                index: _filteredSuras.indexOf(sura),
-                child: const Icon(Icons.drag_handle),
-              ),
-              title: Text(sura.name),
-              subtitle: Text('${sura.pages} pages'),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Checkbox(
-                    value: isChecked,
-                    onChanged: (value) {
-                      setState(() {
-                        if (value == true) {
-                          _selectedIds.add(sura.id);
-                        } else {
-                          _selectedIds.remove(sura.id);
-                        }
-                      });
-                    },
-                  ),
-                  PopupMenuButton<String>(
-                    onSelected: (String value) {
-                      if (value == 'edit') {
-                        _showEditSuraDialog(context, sura);
-                      } else if (value == 'delete') {
-                        _deleteSura(sura);
-                      }
-                    },
-                    itemBuilder: (BuildContext context) => [
-                      const PopupMenuItem<String>(
-                        value: 'edit',
-                        child: Text('Edit'),
-                      ),
-                      const PopupMenuItem<String>(
-                        value: 'delete',
-                        child: Text('Delete'),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      );
-    } else {
-      listWidget = ListView.builder(
-        itemCount: _filteredSuras.length,
-        itemBuilder: (context, index) {
-          final sura = _filteredSuras[index];
-          return CheckboxListTile(
-            title: Text(sura.name),
-            subtitle: Text('${sura.pages} pages'),
-            value: _selectedIds.contains(sura.id),
-            onChanged: (value) {
-              setState(() {
-                if (value == true) {
-                  _selectedIds.add(sura.id);
-                } else {
-                  _selectedIds.remove(sura.id);
-                }
-              });
+    listWidget = ListView.builder(
+      itemCount: _filteredSuras.length,
+      itemBuilder: (context, index) {
+        final sura = _filteredSuras[index];
+        return CheckboxListTile(
+          title: Text(sura.name),
+          subtitle: Text('${sura.pages} pages'),
+          value: _selectedIds.contains(sura.id),
+          onChanged: (value) {
+            setState(() {
+              if (value == true) {
+                _selectedIds.add(sura.id);
+              } else {
+                _selectedIds.remove(sura.id);
+              }
+            });
+          },
+          secondary: PopupMenuButton<String>(
+            onSelected: (String value) {
+              if (value == 'edit') {
+                _showEditSuraDialog(context, sura);
+              } else if (value == 'delete') {
+                _deleteSura(sura);
+              }
             },
-            secondary: PopupMenuButton<String>(
-              onSelected: (String value) {
-                if (value == 'edit') {
-                  _showEditSuraDialog(context, sura);
-                } else if (value == 'delete') {
-                  _deleteSura(sura);
-                }
-              },
-              itemBuilder: (BuildContext context) => [
-                const PopupMenuItem<String>(
-                  value: 'edit',
-                  child: Text('Edit'),
-                ),
-                const PopupMenuItem<String>(
-                  value: 'delete',
-                  child: Text('Delete'),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }
+            itemBuilder: (BuildContext context) => [
+              const PopupMenuItem<String>(
+                value: 'edit',
+                child: Text('Edit'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'delete',
+                child: Text('Delete'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
 
     return Scaffold(
       appBar: AppBar(
@@ -341,10 +294,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               const PopupMenuItem<String>(
                 value: 'desc',
                 child: Text('Sort Z-A'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'manual',
-                child: Text('Manual Reorder'),
               ),
             ],
           ),
