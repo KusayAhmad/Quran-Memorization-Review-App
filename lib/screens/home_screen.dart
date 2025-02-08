@@ -14,14 +14,9 @@ class HomeScreen extends StatefulWidget {
 class HomeScreenState extends State<HomeScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
 
-  List<Sura> _suras = []; // قائمة السور المحملة من قاعدة البيانات
+  List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
-  bool _completionDialogShown = false;
-
-  // متغيرات ترتيب السور
-  bool _isManualOrder = false; // هل الترتيب يدوي (سحب وإفلات)
-  bool _alphabeticalAscending = true; // الترتيب الأبجدي تصاعدياً (افتراضي)
 
   @override
   void initState() {
@@ -44,7 +39,6 @@ class HomeScreenState extends State<HomeScreen> {
     return suras;
   }
 
-  // حساب النسبة المئوية للمراجعة بناءً على عدد الصفحات المكتملة
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
     final completed =
@@ -89,77 +83,28 @@ class HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
-  void _sortSuras(String sortOption) {
-    setState(() {
-      if (sortOption == 'asc') {
-        _isManualOrder = false;
-        _alphabeticalAscending = true;
-        _suras.sort((a, b) => a.name.compareTo(b.name));
-      } else if (sortOption == 'desc') {
-        _isManualOrder = false;
-        _alphabeticalAscending = false;
-        _suras.sort((a, b) => b.name.compareTo(a.name));
-      } else if (sortOption == 'manual') {
-        _isManualOrder = true;
-      }
-    });
-  }
-
-  void _onReorder(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final Sura sura = _suras.removeAt(oldIndex);
-      _suras.insert(newIndex, sura);
-    });
-  }
-
   Widget _buildListView() {
-    if (_isManualOrder) {
-      return ReorderableListView(
-        onReorder: _onReorder,
-        children: _suras.map((sura) {
-          final total = _suras.fold(0, (sum, s) => sum + s.pages);
-          final percentage = total > 0 ? (sura.pages / total) * 100 : 0;
-          return CheckboxListTile(
-            key: ValueKey(sura.id),
-            title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-            subtitle: Text('${sura.pages} pages'),
-            value: sura.isCompleted,
-            onChanged: (value) async {
-              setState(() {
-                sura.isCompleted = value ?? false;
-              });
-              await _updateProgress(sura);
-              if (_progress >= 1.0) _showCompletionDialog();
-            },
-          );
-        }).toList(),
-      );
-    } else {
-      return ListView.builder(
-        itemCount: _suras.length,
-        itemBuilder: (context, index) {
-          final sura = _suras[index];
-          final total = _suras.fold(0, (sum, s) => sum + s.pages);
-          final percentage = total > 0 ? (sura.pages / total) * 100 : 0;
-          return CheckboxListTile(
-            key: ValueKey(sura.id),
-            title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-            subtitle: Text('${sura.pages} pages'),
-            value: sura.isCompleted,
-            onChanged: (value) async {
-              setState(() {
-                sura.isCompleted = value ?? false;
-              });
-              await _updateProgress(sura);
-              if (_progress >= 1.0) _showCompletionDialog();
-            },
-          );
-        },
-      );
-    }
+    return ListView.builder(
+      itemCount: _suras.length,
+      itemBuilder: (context, index) {
+        final sura = _suras[index];
+        final total = _suras.fold(0, (sum, s) => sum + s.pages);
+        final percentage = total > 0 ? (sura.pages / total) * 100 : 0;
+        return CheckboxListTile(
+          key: ValueKey(sura.id),
+          title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
+          subtitle: Text('${sura.pages} pages'),
+          value: sura.isCompleted,
+          onChanged: (value) async {
+            setState(() {
+              sura.isCompleted = value ?? false;
+            });
+            await _updateProgress(sura);
+            if (_progress >= 1.0) _showCompletionDialog();
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -168,26 +113,6 @@ class HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: const Text('Review Memorized'),
         actions: [
-          // زر القائمة المنسدلة لاختيار نوع الترتيب
-          PopupMenuButton<String>(
-            onSelected: _sortSuras,
-            icon: const Icon(Icons.sort),
-            itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
-                value: 'asc',
-                child: Text('Sort A-Z'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'desc',
-                child: Text('Sort Z-A'),
-              ),
-              const PopupMenuItem<String>(
-                value: 'manual',
-                child: Text('Manual Reorder'),
-              ),
-            ],
-          ),
-          // زر الانتقال إلى شاشة اختيار السور
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
