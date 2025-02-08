@@ -18,7 +18,6 @@ class DatabaseHelper {
   static final tablePreferences = 'preferences';
   static final columnPreferenceName = 'name';
   static final columnPreferenceValue = 'value';
-
   static Database? _database;
 
   Future<Database> get database async {
@@ -222,5 +221,13 @@ class DatabaseHelper {
       },
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
+  }
+
+  Future<void> setSelectedLanguage(String languageCode) async {
+    await setPreference('selectedLanguage', languageCode);
+  }
+
+  Future<String?> getSelectedLanguage() async {
+    return await getPreference('selectedLanguage');
   }
 }

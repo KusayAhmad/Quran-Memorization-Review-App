@@ -15,9 +15,11 @@
   "suraName": "اسم السورة",
   "numberOfPages": "عدد الصفحات",
   "congratulations": "تهانينا!",
-  "reviewCompleted": "لقد أتممت مراجعتك لهذا اليوم (＾ᗜ＾)\nتقبل الله منا ومنكم",
+  "reviewCompleted": "لقد أتممت وردك لهذا اليوم (＾ᗜ＾)\nتقبل الله منا ومنكم",
   "alhamdulillah": "الحمد لله ♥",
+  "onePage": "صفحة",
+  "twoPages": "صفحتان",
   "pages": "صفحات",
-  "arabic": "العربية",
-  "englisch": "Englisch"
+  "languageArabic": "العربية",
+  "languageEnglish": "English"
 }

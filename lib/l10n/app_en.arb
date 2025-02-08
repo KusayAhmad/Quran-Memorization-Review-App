@@ -1,6 +1,6 @@
 {
-  "title": "Quran Daily Review",
-  "homeScreenTitle": "Quran Memorization Review",
+  "title": "Daily Quran Review",
+  "homeScreenTitle": "Daily Quran Review",
   "selectSuras": "Select Suras for Review",
   "searchSuras": "Search Suras",
   "sortAZ": "Sort A-Z",
@@ -17,7 +17,9 @@
   "congratulations": "Congratulations!",
   "reviewCompleted": "You have completed your review for today (＾ᗜ＾)\nMay Allah accept and grant steadfastness",
   "alhamdulillah": "Alhamdullah ♥",
+  "onePage": "pages",
+  "twoPages": "pages",
   "pages": "pages",
-  "arabic": "العربية",
-  "englisch": "Englisch"
+  "languageArabic": "العربية",
+  "languageEnglish": "English"
 }

@@ -85,6 +85,18 @@ class HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
+  String getPageText(BuildContext context, int pages) {
+    if (pages == 1) {
+      return AppLocalizations.of(context)!.onePage;
+    } else if (pages == 2) {
+      return AppLocalizations.of(context)!.twoPages;
+    } else if (pages > 10) {
+      return '$pages ${AppLocalizations.of(context)!.onePage}';
+    } else {
+      return '$pages ${AppLocalizations.of(context)!.pages}';
+    }
+  }
+
   Widget _buildListView() {
     return ListView.builder(
       itemCount: _suras.length,
@@ -95,7 +107,7 @@ class HomeScreenState extends State<HomeScreen> {
         return CheckboxListTile(
           key: ValueKey(sura.id),
           title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-          subtitle: Text('${sura.pages} pages'),
+          subtitle: Text(getPageText(context, sura.pages)),
           value: sura.isCompleted,
           onChanged: (value) async {
             setState(() {
@@ -118,16 +130,17 @@ class HomeScreenState extends State<HomeScreen> {
           PopupMenuButton<Locale>(
             icon: const Icon(Icons.language),
             onSelected: (Locale locale) {
+              DatabaseHelper().setSelectedLanguage(locale.languageCode);
               widget.setLocale(locale);
             },
             itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
               PopupMenuItem<Locale>(
                 value: Locale('en'),
-                child: Text(AppLocalizations.of(context)!.englisch),
+                child: Text(AppLocalizations.of(context)!.languageEnglish),
               ),
               PopupMenuItem<Locale>(
                 value: Locale('ar'),
-                child: Text(AppLocalizations.of(context)!.arabic),
+                child: Text(AppLocalizations.of(context)!.languageArabic),
               ),
             ],
           ),
