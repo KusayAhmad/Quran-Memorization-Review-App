@@ -110,27 +110,16 @@ class DatabaseHelper {
 
   Future<void> addSelectedSura(Sura sura) async {
     final db = await database;
-    // Check if the sura already exists in the selected_suras table
-    final List<Map<String, dynamic>> existingSuras = await db.query(
+    await db.insert(
       'selected_suras',
-      where: 'id = ?',
-      whereArgs: [sura.id],
+      {
+        'id': sura.id,
+        'name': sura.name,
+        'pages': sura.pages,
+        'reviewed': 0,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
     );
- 
-    if (existingSuras.isEmpty) {
-      await db.insert(
-        'selected_suras',
-        {
-          'id': sura.id,
-          'name': sura.name,
-          'pages': sura.pages,
-          'reviewed': 0,
-        },
-        conflictAlgorithm: ConflictAlgorithm.replace,
-      );
-    } else {
-      print('Sura ${sura.name} already exists in selected_suras');
-    }
   }
 
   Future<void> removeSelectedSura(int id) async {
