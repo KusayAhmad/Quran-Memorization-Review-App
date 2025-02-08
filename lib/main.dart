@@ -1,8 +1,7 @@
-// [lib/main.dart]
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:quran_review_app/screens/home_screen.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import '../screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -27,7 +26,7 @@ class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'مراجعة المحفوظ',
+      title: 'مراجعة الورد اليومي',
       theme: ThemeData(
         primarySwatch: Colors.green,
         fontFamily: 'Uthmanic',
@@ -39,8 +38,8 @@ class _MyAppState extends State<MyApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: const [
-        Locale('en'), // English
-        Locale('ar'), // Arabic
+        Locale('en'),
+        Locale('ar'),
       ],
       locale: _locale,
       home: HomeScreen(setLocale: setLocale),

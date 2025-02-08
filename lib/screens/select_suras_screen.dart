@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SelectSurasScreen extends StatefulWidget {
-  const SelectSurasScreen({super.key});
+  final Function(Locale) setLocale;
+  const SelectSurasScreen({super.key, required this.setLocale});
 
   @override
   SelectSurasScreenState createState() => SelectSurasScreenState();
@@ -89,7 +90,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     }
   }
 
-    void _saveSelection() async {
+  void _saveSelection() async {
     for (var sura in _allSuras) {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
@@ -110,18 +111,20 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Add New Sura'),
+          title: Text(AppLocalizations.of(context)!.addNewSura),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                decoration: const InputDecoration(labelText: 'Sura Name'),
+                decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.suraName),
                 onChanged: (value) {
                   suraName = value;
                 },
               ),
               TextField(
-                decoration: const InputDecoration(labelText: 'Number of Pages'),
+                decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.numberOfPages),
                 keyboardType: TextInputType.number,
                 onChanged: (value) {
                   suraPages = int.tryParse(value) ?? 0;
@@ -131,13 +134,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Add'),
+              child: Text(AppLocalizations.of(context)!.add),
               onPressed: () {
                 if (suraName.isNotEmpty && suraPages > 0) {
                   _addSura(suraName, suraPages);
@@ -173,19 +176,21 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Edit Sura'),
+          title: Text(AppLocalizations.of(context)!.edit),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
-                decoration: const InputDecoration(labelText: 'Sura Name'),
+                decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.suraName),
                 controller: TextEditingController(text: sura.name),
                 onChanged: (value) {
                   suraName = value;
                 },
               ),
               TextField(
-                decoration: const InputDecoration(labelText: 'Number of Pages'),
+                decoration: InputDecoration(
+                    labelText: AppLocalizations.of(context)!.numberOfPages),
                 keyboardType: TextInputType.number,
                 controller: TextEditingController(text: sura.pages.toString()),
                 onChanged: (value) {
@@ -196,13 +201,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           ),
           actions: [
             TextButton(
-              child: const Text('Cancel'),
+              child: Text(AppLocalizations.of(context)!.cancel),
               onPressed: () {
                 Navigator.of(context).pop();
               },
             ),
             TextButton(
-              child: const Text('Update'),
+              child: Text(AppLocalizations.of(context)!.update),
               onPressed: () {
                 if (suraName.isNotEmpty && suraPages > 0) {
                   _updateSura(
@@ -236,7 +241,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
           title: Text(sura.name),
-          subtitle: Text('${sura.pages} pages'),
+          subtitle:
+              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {
@@ -256,13 +262,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               }
             },
             itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'edit',
-                child: Text('Edit'),
+                child: Text(AppLocalizations.of(context)!.edit),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'delete',
-                child: Text('Delete'),
+                child: Text(AppLocalizations.of(context)!.delete),
               ),
             ],
           ),
@@ -272,19 +278,19 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Select Suras for Review'),
+        title: Text(AppLocalizations.of(context)!.selectSuras),
         actions: [
           PopupMenuButton<String>(
             onSelected: _sortSuras,
             icon: const Icon(Icons.sort),
             itemBuilder: (BuildContext context) => [
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'asc',
-                child: Text('Sort A-Z'),
+                child: Text(AppLocalizations.of(context)!.sortAZ),
               ),
-              const PopupMenuItem<String>(
+              PopupMenuItem<String>(
                 value: 'desc',
-                child: Text('Sort Z-A'),
+                child: Text(AppLocalizations.of(context)!.sortZA),
               ),
             ],
           ),
@@ -294,7 +300,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               _showAddSuraDialog(context);
             },
           ),
-          
         ],
       ),
       body: Column(
@@ -302,8 +307,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
-              decoration: const InputDecoration(
-                labelText: 'Search Suras',
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.searchSuras,
                 prefixIcon: Icon(Icons.search),
               ),
               onChanged: _filterSuras,
@@ -314,7 +319,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _saveSelection,
-        child: const Icon(Icons.save),
+        child: Text(AppLocalizations.of(context)!.save),
       ),
     );
   }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -61,10 +61,9 @@ class HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Congratulations!'),
-        content: const Text(
-          'You have completed your review for today (＾ᗜ＾)\n'
-          'May Allah accept and grant steadfastness',
+        title: Text(AppLocalizations.of(context)!.congratulations),
+        content: Text(
+          AppLocalizations.of(context)!.reviewCompleted,
           textAlign: TextAlign.center,
         ),
         actions: [
@@ -73,7 +72,7 @@ class HomeScreenState extends State<HomeScreen> {
               Navigator.pop(context);
               _clearReviewedSuras();
             },
-            child: const Text('Alhamdullah ♥'),
+            child: Text(AppLocalizations.of(context)!.alhamdulillah),
           ),
         ],
       ),
@@ -132,7 +131,8 @@ class HomeScreenState extends State<HomeScreen> {
               final result = await Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => const SelectSurasScreen(),
+                  builder: (context) =>
+                      SelectSurasScreen(setLocale: widget.setLocale),
                 ),
               );
               if (result == true) {
