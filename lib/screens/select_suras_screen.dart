@@ -88,17 +88,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     }
   }
 
-  void _onReorder(int oldIndex, int newIndex) {
-    setState(() {
-      if (newIndex > oldIndex) {
-        newIndex -= 1;
-      }
-      final Sura movedSura = _filteredSuras.removeAt(oldIndex);
-      _filteredSuras.insert(newIndex, movedSura);
-    });
-  }
-
-  void _saveSelection() async {
+   void _saveSelection() async {
     for (var sura in _allSuras) {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
