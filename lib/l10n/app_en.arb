@@ -1,0 +1,21 @@
+{
+  "title": "Quran Review",
+  "homeScreenTitle": "Review Memorized",
+  "selectSuras": "Select Suras for Review",
+  "searchSuras": "Search Suras",
+  "sortAZ": "Sort A-Z",
+  "sortZA": "Sort Z-A",
+  "add": "Add",
+  "cancel": "Cancel",
+  "update": "Update",
+  "edit": "Edit",
+  "delete": "Delete",
+  "save": "Save",
+  "addNewSura": "Add New Sura",
+  "suraName": "Sura Name",
+  "numberOfPages": "Number of Pages",
+  "congratulations": "Congratulations!",
+  "reviewCompleted": "You have completed your review for today (＾ᗜ＾)\nMay Allah accept and grant steadfastness",
+  "alhamdulillah": "Alhamdullah ♥",
+  "pages": "pages"
+}

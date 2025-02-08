@@ -1,0 +1,21 @@
+{
+  "title": "الورد اليومي",
+  "homeScreenTitle": "مراجعة المحفوظ",
+  "selectSuras": "اختر السور للمراجعة",
+  "searchSuras": "ابحث عن سورة",
+  "sortAZ": "رتب من الألف إلى الياء",
+  "sortZA": "رتب من الياء إلى الألف",
+  "add": "أضف",
+  "cancel": "إلغاء",
+  "update": "تحديث",
+  "edit": "تعديل",
+  "delete": "حذف",
+  "save": "حفظ",
+  "addNewSura": "أضف سورة جديدة",
+  "suraName": "اسم السورة",
+  "numberOfPages": "عدد الصفحات",
+  "congratulations": "تهانينا!",
+  "reviewCompleted": "لقد أتممت مراجعتك لهذا اليوم (＾ᗜ＾)\nتقبل الله منا ومنكم",
+  "alhamdulillah": "الحمد لله ♥",
+  "pages": "صفحات"
+}

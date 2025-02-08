@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:quran_review_app/database/database_helper.dart';
-import 'package:quran_review_app/models/sura_model.dart';
+import '../database/database_helper.dart';
+import '../models/sura_model.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   const SelectSurasScreen({super.key});
@@ -88,7 +89,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     }
   }
 
-   void _saveSelection() async {
+    void _saveSelection() async {
     for (var sura in _allSuras) {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
@@ -293,6 +294,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               _showAddSuraDialog(context);
             },
           ),
+          
         ],
       ),
       body: Column(

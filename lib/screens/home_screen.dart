@@ -3,9 +3,12 @@ import 'package:percent_indicator/percent_indicator.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  final Function(Locale) setLocale;
+
+  const HomeScreen({super.key, required this.setLocale});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -111,8 +114,18 @@ class HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Review Memorized'),
+        title: Text(AppLocalizations.of(context)!.homeScreenTitle),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.language),
+            onPressed: () {
+              widget.setLocale(
+                Localizations.localeOf(context).languageCode == 'en'
+                    ? const Locale('ar')
+                    : const Locale('en'),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () async {
