@@ -115,15 +115,21 @@ class HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.homeScreenTitle),
         actions: [
-          IconButton(
+          PopupMenuButton<Locale>(
             icon: const Icon(Icons.language),
-            onPressed: () {
-              widget.setLocale(
-                Localizations.localeOf(context).languageCode == 'en'
-                    ? const Locale('ar')
-                    : const Locale('en'),
-              );
+            onSelected: (Locale locale) {
+              widget.setLocale(locale);
             },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
+              PopupMenuItem<Locale>(
+                value: Locale('en'),
+                child: Text(AppLocalizations.of(context)!.englisch),
+              ),
+              PopupMenuItem<Locale>(
+                value: Locale('ar'),
+                child: Text(AppLocalizations.of(context)!.arabic),
+              ),
+            ],
           ),
           IconButton(
             icon: const Icon(Icons.edit),
