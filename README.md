@@ -1,6 +1,6 @@
-# Quran Review App
+# Quran Memorization Review App
 
-The Quran Review App is a mobile application designed to help users track and manage their Quran memorization review progress. The app provides a user-friendly interface to select, review, and monitor the completion of Suras (chapters) from the Quran.
+The Quran Memorization Review App is a mobile application designed to help users track and manage their Quran memorization review progress. The app provides a user-friendly interface to select, review, and monitor the completion of Suras (chapters) from the Quran.
 
 ## Features
 
