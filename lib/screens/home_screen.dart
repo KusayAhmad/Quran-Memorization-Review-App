@@ -90,6 +90,15 @@ class HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text(AppLocalizations.of(context)!.congratulations),
+        titleTextStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 24.0,
+          fontWeight: FontWeight.bold,
+        ),
+        contentTextStyle: const TextStyle(
+          color: Colors.black,
+          fontSize: 18.0,
+        ),
         content: Text(
           AppLocalizations.of(context)!.reviewCompleted,
           textAlign: TextAlign.center,
@@ -101,6 +110,11 @@ class HomeScreenState extends State<HomeScreen> {
               _clearReviewedSuras();
             },
             child: Text(AppLocalizations.of(context)!.alhamdulillah),
+            style: TextButton.styleFrom(
+                backgroundColor: const Color.fromARGB(255, 164, 190, 151),
+                foregroundColor: Color.fromARGB(255, 0, 0, 0),
+                textStyle: const TextStyle(
+                    fontSize: 18.0, fontWeight: FontWeight.bold)),
           ),
         ],
       ),
