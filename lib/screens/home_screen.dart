@@ -27,8 +27,8 @@ class HomeScreenState extends State<HomeScreen> {
     _loadData();
   }
 
-  void _loadData() async {
-    List<Sura> suras = await _getSurasWithProgress();
+  Future<void> _loadData() async {
+    final suras = await _getSurasWithProgress();
     setState(() {
       _suras = suras;
       _isLoading = false;
@@ -37,16 +37,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<Sura>> _getSurasWithProgress() async {
-    final suras = await _dbHelper.getSelectedSuras();
-    print('Number of retrieved suras: ${suras.length}');
-    return suras;
+    return await _dbHelper.getSelectedSuras();
   }
 
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
     final completed =
         _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
-
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
@@ -79,7 +76,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _clearReviewedSuras() async {
+  Future<void> _clearReviewedSuras() async {
     final db = await _dbHelper.database;
     await db.delete('selected_suras');
     _loadData();
@@ -102,20 +99,23 @@ class HomeScreenState extends State<HomeScreen> {
       itemCount: _suras.length,
       itemBuilder: (context, index) {
         final sura = _suras[index];
-        final total = _suras.fold(0, (sum, s) => sum + s.pages);
-        final percentage = total > 0 ? (sura.pages / total) * 100 : 0;
-        return CheckboxListTile(
-          key: ValueKey(sura.id),
+        final percentage = (_suras.isNotEmpty && _suras[0].pages > 0)
+            ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
+            : 0;
+
+        return ListTile(
+          leading: Checkbox(
+            value: sura.isCompleted,
+            onChanged: (value) async {
+              setState(() {
+                sura.isCompleted = value ?? false;
+              });
+              await _updateProgress(sura);
+              if (_progress >= 1.0) _showCompletionDialog();
+            },
+          ),
           title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
           subtitle: Text(getPageText(context, sura.pages)),
-          value: sura.isCompleted,
-          onChanged: (value) async {
-            setState(() {
-              sura.isCompleted = value ?? false;
-            });
-            await _updateProgress(sura);
-            if (_progress >= 1.0) _showCompletionDialog();
-          },
         );
       },
     );
