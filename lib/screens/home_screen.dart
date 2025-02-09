@@ -16,7 +16,6 @@ class HomeScreen extends StatefulWidget {
 
 class HomeScreenState extends State<HomeScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-
   List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
@@ -28,30 +27,62 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _loadData() async {
-    final suras = await _getSurasWithProgress();
-    setState(() {
-      _suras = suras;
-      _isLoading = false;
-    });
-    _calculateProgress();
-  }
-
-  Future<List<Sura>> _getSurasWithProgress() async {
-    return await _dbHelper.getSelectedSuras();
+    try {
+      final suras = await _dbHelper.getSelectedSuras();
+      setState(() {
+        _suras = suras;
+        _isLoading = false;
+      });
+      _calculateProgress();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load data: $e')),
+      );
+    }
   }
 
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
-    final completed =
-        _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+    final completed = _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
   }
 
   Future<void> _updateProgress(Sura sura) async {
-    await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
-    _calculateProgress();
+    try {
+      await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
+      _calculateProgress();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to update progress: $e')),
+      );
+    }
+  }
+
+  Widget _buildListView() {
+    return ListView.builder(
+      itemCount: _suras.length,
+      itemBuilder: (context, index) {
+        final sura = _suras[index];
+        final percentage = (_suras.isNotEmpty && _suras[0].pages > 0)
+            ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
+            : 0;
+
+        return CheckboxListTile(
+          title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
+          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          value: sura.isCompleted,
+          onChanged: (value) async {
+            setState(() {
+              sura.isCompleted = value ?? false;
+            });
+            await _updateProgress(sura);
+            if (_progress >= 1.0) _showCompletionDialog();
+          },
+        );
+      },
+    );
   }
 
   void _showCompletionDialog() {
@@ -77,48 +108,15 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _clearReviewedSuras() async {
-    final db = await _dbHelper.database;
-    await db.delete('selected_suras');
-    _loadData();
-  }
-
-  String getPageText(BuildContext context, int pages) {
-    if (pages == 1) {
-      return AppLocalizations.of(context)!.onePage;
-    } else if (pages == 2) {
-      return AppLocalizations.of(context)!.twoPages;
-    } else if (pages > 10) {
-      return '$pages ${AppLocalizations.of(context)!.onePage}';
-    } else {
-      return '$pages ${AppLocalizations.of(context)!.pages}';
+    try {
+      final db = await _dbHelper.database;
+      await db.delete('selected_suras');
+      _loadData();
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to clear data: $e')),
+      );
     }
-  }
-
-  Widget _buildListView() {
-    return ListView.builder(
-      itemCount: _suras.length,
-      itemBuilder: (context, index) {
-        final sura = _suras[index];
-        final percentage = (_suras.isNotEmpty && _suras[0].pages > 0)
-            ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
-            : 0;
-
-        return ListTile(
-          leading: Checkbox(
-            value: sura.isCompleted,
-            onChanged: (value) async {
-              setState(() {
-                sura.isCompleted = value ?? false;
-              });
-              await _updateProgress(sura);
-              if (_progress >= 1.0) _showCompletionDialog();
-            },
-          ),
-          title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-          subtitle: Text(getPageText(context, sura.pages)),
-        );
-      },
-    );
   }
 
   @override
