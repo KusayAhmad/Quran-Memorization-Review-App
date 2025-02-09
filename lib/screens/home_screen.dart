@@ -43,7 +43,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
-    final completed = _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+    final completed =
+        _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
@@ -71,7 +72,8 @@ class HomeScreenState extends State<HomeScreen> {
 
         return CheckboxListTile(
           title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          subtitle:
+              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: sura.isCompleted,
           onChanged: (value) async {
             setState(() {
@@ -163,11 +165,15 @@ class HomeScreenState extends State<HomeScreen> {
             onPressed: () async {
               final result = await Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) =>
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) =>
                       SelectSurasScreen(setLocale: widget.setLocale),
+                  transitionDuration: Duration(milliseconds: 300),
+                  transitionsBuilder: (_, anim, __, child) =>
+                      FadeTransition(opacity: anim, child: child),
                 ),
               );
+
               if (result == true) {
                 _loadData();
               }
