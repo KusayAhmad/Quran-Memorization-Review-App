@@ -126,19 +126,20 @@ class HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.homeScreenTitle),
+        backgroundColor: const Color.fromARGB(255, 164, 190, 151),
         actions: [
           PopupMenuButton<Locale>(
             icon: const Icon(Icons.language),
-            onSelected: (Locale locale) {
-              DatabaseHelper().setSelectedLanguage(locale.languageCode);
+            onSelected: (Locale locale) async {
+              await DatabaseHelper().setSelectedLanguage(locale.languageCode);
               widget.setLocale(locale);
             },
-            itemBuilder: (BuildContext context) => <PopupMenuEntry<Locale>>[
-              PopupMenuItem<Locale>(
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem(
                 value: Locale('en'),
                 child: Text(AppLocalizations.of(context)!.languageEnglish),
               ),
-              PopupMenuItem<Locale>(
+              PopupMenuItem(
                 value: Locale('ar'),
                 child: Text(AppLocalizations.of(context)!.languageArabic),
               ),
@@ -146,6 +147,7 @@ class HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             icon: const Icon(Icons.edit),
+            tooltip: AppLocalizations.of(context)!.edit,
             onPressed: () async {
               final result = await Navigator.push(
                 context,
@@ -163,20 +165,24 @@ class HomeScreenState extends State<HomeScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                Expanded(child: _buildListView()),
-                Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: LinearPercentIndicator(
-                    lineHeight: 20.0,
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  Expanded(child: _buildListView()),
+                  LinearPercentIndicator(
+                    lineHeight: 30.0,
+                    animation: true,
                     percent: _progress,
-                    backgroundColor: Colors.grey,
-                    progressColor: Colors.green,
-                    center: Text('${(_progress * 100).toStringAsFixed(1)}%'),
+                    backgroundColor: Colors.grey[300],
+                    progressColor: const Color.fromARGB(255, 164, 190, 151),
+                    center: Text(
+                      '${(_progress * 100).toStringAsFixed(1)}%',
+                      style: TextStyle(color: Colors.black),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
     );
   }
