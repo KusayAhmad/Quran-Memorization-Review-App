@@ -35,9 +35,11 @@ class HomeScreenState extends State<HomeScreen> {
       });
       _calculateProgress();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update progress: $e')),
+        );
+      }
     }
   }
 
@@ -55,9 +57,11 @@ class HomeScreenState extends State<HomeScreen> {
       await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
       _calculateProgress();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update progress: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update progress: $e')),
+        );
+      }
     }
   }
 
@@ -111,12 +115,12 @@ class HomeScreenState extends State<HomeScreen> {
               Navigator.pop(context);
               _clearReviewedSuras();
             },
-            child: Text(AppLocalizations.of(context)!.alhamdulillah),
             style: TextButton.styleFrom(
                 backgroundColor: const Color.fromARGB(255, 164, 190, 151),
                 foregroundColor: Color.fromARGB(255, 0, 0, 0),
                 textStyle: const TextStyle(
                     fontSize: 18.0, fontWeight: FontWeight.bold)),
+            child: Text(AppLocalizations.of(context)!.alhamdulillah),
           ),
         ],
       ),
@@ -129,9 +133,11 @@ class HomeScreenState extends State<HomeScreen> {
       await db.delete('selected_suras');
       _loadData();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to clear data: $e')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to clear data: $e')),
+        );
+      }
     }
   }
 

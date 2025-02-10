@@ -21,5 +21,6 @@
   "twoPages": "pages",
   "pages": "pages",
   "languageArabic": "العربية",
-  "languageEnglish": "English"
+  "languageEnglish": "English",
+  "invalidInput": "Invalid input provided"
 }

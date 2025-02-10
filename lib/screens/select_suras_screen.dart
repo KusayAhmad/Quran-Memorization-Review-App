@@ -100,7 +100,9 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         await _dbHelper.removeSelectedSura(sura.id);
       }
     }
-    Navigator.pop(context, true);
+    if (mounted) {
+      Navigator.pop(context, true);
+    }
   }
 
   void _showAddSuraDialog(BuildContext context) {
@@ -134,19 +136,30 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           ),
           actions: [
             TextButton(
+              onPressed: () => Navigator.pop(context),
               child: Text(AppLocalizations.of(context)!.cancel),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
             ),
             TextButton(
-              child: Text(AppLocalizations.of(context)!.add),
-              onPressed: () {
+              onPressed: () async {
                 if (suraName.isNotEmpty && suraPages > 0) {
-                  _addSura(suraName, suraPages);
-                  Navigator.of(context).pop();
+                  await _addSura(suraName, suraPages);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        backgroundColor:
+                            const Color.fromARGB(255, 226, 120, 112),
+                        content: Text(
+                            AppLocalizations.of(context)!.invalidInput,
+                            style: TextStyle(
+                                color: const Color.fromARGB(255, 0, 0, 0),
+                                fontWeight: FontWeight.bold))),
+                  );
                 }
               },
+              child: Text(AppLocalizations.of(context)!.add),
             ),
           ],
         );
