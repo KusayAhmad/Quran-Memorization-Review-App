@@ -22,5 +22,8 @@
   "pages": "pages",
   "languageArabic": "العربية",
   "languageEnglish": "English",
-  "invalidInput": "Invalid input provided"
-}
+  "invalidInput": "Invalid input provided",
+  "updateProgressFailed": "Failed to update progress:",
+  "clearDataFailed": "Failed to clear data:",
+  "suraRemoved": "removed"
+  }

@@ -74,18 +74,38 @@ class HomeScreenState extends State<HomeScreen> {
             ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
             : 0;
 
-        return CheckboxListTile(
-          title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-          subtitle:
-              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
-          value: sura.isCompleted,
-          onChanged: (value) async {
+        return Dismissible(
+          key: Key(sura.id.toString()),
+          direction: DismissDirection.horizontal,
+          onDismissed: (direction) async {
+            // await _dbHelper.updateSuraReviewedStatus(sura.id, false);
+            await _dbHelper.removeSelectedSura(sura.id);
             setState(() {
-              sura.isCompleted = value ?? false;
+              _suras.removeAt(index);
             });
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+                    '${sura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
+              ));
+            }
             await _updateProgress(sura);
             if (_progress >= 1.0) _showCompletionDialog();
           },
+          background: Container(color: Colors.red),
+          child: CheckboxListTile(
+            title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
+            subtitle:
+                Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+            value: sura.isCompleted,
+            onChanged: (value) async {
+              setState(() {
+                sura.isCompleted = value ?? false;
+              });
+              await _updateProgress(sura);
+              if (_progress >= 1.0) _showCompletionDialog();
+            },
+          ),
         );
       },
     );

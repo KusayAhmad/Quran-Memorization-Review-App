@@ -22,5 +22,8 @@
   "pages": "صفحات",
   "languageArabic": "العربية",
   "languageEnglish": "English",
-  "invalidInput": "مدخلات غير صالحة"
+  "invalidInput": "مدخلات غير صالحة",
+  "updateProgressFailed": "فشل في تحديث التقدم:",
+  "clearDataFailed": "فشل في مسح البيانات:",
+  "suraRemoved": "تمت إزالتها"
 }
