@@ -225,7 +225,6 @@ class HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
-                  Expanded(child: _buildListView()),
                   LinearPercentIndicator(
                     lineHeight: 30.0,
                     animation: true,
@@ -237,6 +236,7 @@ class HomeScreenState extends State<HomeScreen> {
                       style: TextStyle(color: Colors.black),
                     ),
                   ),
+                  Expanded(child: _buildListView()),
                 ],
               ),
             ),
