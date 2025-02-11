@@ -46,7 +46,7 @@ class HomeScreenState extends State<HomeScreen> {
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
     final completed =
-        _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+    _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
@@ -65,7 +65,7 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Widget _buildListView() {
+  Widget _buildListView(Color primaryColor) {
     return ListView.builder(
       itemCount: _suras.length,
       itemBuilder: (context, index) {
@@ -74,72 +74,95 @@ class HomeScreenState extends State<HomeScreen> {
             ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
             : 0;
 
-        return Dismissible(
-          key: Key(sura.id.toString()),
-          direction: DismissDirection.horizontal,
-          onDismissed: (direction) async {
-            final removedSura = _suras[index];
-            await _dbHelper.removeSelectedSura(removedSura.id);
-            setState(() {
-              _suras.removeAt(index);
-            });
-            if (context.mounted) {
-              ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('${removedSura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
-                  action: SnackBarAction(
-                    label: AppLocalizations.of(context)!.undo,
-                    onPressed: () async {
-                      await _dbHelper.addSelectedSura(removedSura);
-                      setState(() {
-                        _suras.insert(index, removedSura);
-                      });
-                      _calculateProgress();
-                    },
-                  ),
-                ),
-              );
-            }
-            await _updateProgress(removedSura);
-            if (_progress >= 1.0) _showCompletionDialog();
-          }          ,
-          background: Container(color: Colors.red),
-          child: CheckboxListTile(
-            title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),
-            subtitle:
-                Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
-            value: sura.isCompleted,
-            onChanged: (value) async {
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8.0),
+          child: Dismissible(
+            key: Key(sura.id.toString()),
+            direction: DismissDirection.horizontal,
+            onDismissed: (direction) async {
+              final removedSura = _suras[index];
+              await _dbHelper.removeSelectedSura(removedSura.id);
               setState(() {
-                sura.isCompleted = value ?? false;
+                _suras.removeAt(index);
               });
-              await _updateProgress(sura);
-              if (_progress >= 1.0) _showCompletionDialog();
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                        '${removedSura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
+                    action: SnackBarAction(
+                      label: AppLocalizations.of(context)!.undo,
+                      onPressed: () async {
+                        await _dbHelper.addSelectedSura(removedSura);
+                        setState(() {
+                          _suras.insert(index, removedSura);
+                        });
+                        _calculateProgress();
+                      },
+                    ),
+                  ),
+                );
+              }
+              await _updateProgress(removedSura);
+              if (_progress >= 1.0) _showCompletionDialog(primaryColor);
             },
+            background: Container(color: Colors.redAccent),
+            child: CheckboxListTile(
+              contentPadding:
+              const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              tileColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+              title: Text(
+                '${sura.name} (${percentage.toStringAsFixed(1)}%)',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 18.0,
+                ),
+              ),
+              subtitle: Text(
+                '${sura.pages} ${AppLocalizations.of(context)!.pages}',
+                style: const TextStyle(
+                  color: Colors.black87,
+                  fontSize: 14.0,
+                ),
+              ),
+              value: sura.isCompleted,
+              onChanged: (value) async {
+                setState(() {
+                  sura.isCompleted = value ?? false;
+                });
+                await _updateProgress(sura);
+                if (_progress >= 1.0) _showCompletionDialog(primaryColor);
+              },
+            ),
           ),
         );
       },
     );
   }
 
-  void _showCompletionDialog() {
+  void _showCompletionDialog(Color primaryColor) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(AppLocalizations.of(context)!.congratulations),
-        titleTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 24.0,
-          fontWeight: FontWeight.bold,
-        ),
-        contentTextStyle: const TextStyle(
-          color: Colors.black,
-          fontSize: 18.0,
+        title: Text(
+          AppLocalizations.of(context)!.congratulations,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 24.0,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         content: Text(
           AppLocalizations.of(context)!.reviewCompleted,
           textAlign: TextAlign.center,
+          style: const TextStyle(
+            color: Colors.black,
+            fontSize: 18.0,
+          ),
         ),
         actions: [
           TextButton(
@@ -148,10 +171,13 @@ class HomeScreenState extends State<HomeScreen> {
               _clearReviewedSuras();
             },
             style: TextButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 164, 190, 151),
-                foregroundColor: Color.fromARGB(255, 0, 0, 0),
-                textStyle: const TextStyle(
-                    fontSize: 18.0, fontWeight: FontWeight.bold)),
+              backgroundColor: primaryColor,
+              foregroundColor: Colors.black,
+              textStyle: const TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             child: Text(AppLocalizations.of(context)!.alhamdulillah),
           ),
         ],
@@ -175,13 +201,17 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final Color primaryColor = Colors.pink.shade300;
+    final Color secondaryColor = Colors.pink.shade200;
+
     return Scaffold(
+      backgroundColor: Colors.pink.shade50,
       appBar: AppBar(
         title: Text(AppLocalizations.of(context)!.homeScreenTitle),
-        backgroundColor: const Color.fromARGB(255, 164, 190, 151),
+        backgroundColor: primaryColor,
         actions: [
           PopupMenuButton<Locale>(
-            icon: const Icon(Icons.language),
+            icon: const Icon(Icons.language, size: 24.0),
             onSelected: (Locale locale) async {
               await DatabaseHelper().setSelectedLanguage(locale.languageCode);
               widget.setLocale(locale);
@@ -189,16 +219,22 @@ class HomeScreenState extends State<HomeScreen> {
             itemBuilder: (BuildContext context) => [
               PopupMenuItem(
                 value: Locale('en'),
-                child: Text(AppLocalizations.of(context)!.languageEnglish),
+                child: Text(
+                  AppLocalizations.of(context)!.languageEnglish,
+                  style: const TextStyle(color: Colors.black),
+                ),
               ),
               PopupMenuItem(
                 value: Locale('ar'),
-                child: Text(AppLocalizations.of(context)!.languageArabic),
+                child: Text(
+                  AppLocalizations.of(context)!.languageArabic,
+                  style: const TextStyle(color: Colors.black),
+                ),
               ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.edit),
+            icon: const Icon(Icons.edit, size: 24.0),
             tooltip: AppLocalizations.of(context)!.edit,
             onPressed: () async {
               final result = await Navigator.push(
@@ -206,7 +242,7 @@ class HomeScreenState extends State<HomeScreen> {
                 PageRouteBuilder(
                   pageBuilder: (_, __, ___) =>
                       SelectSurasScreen(setLocale: widget.setLocale),
-                  transitionDuration: Duration(milliseconds: 300),
+                  transitionDuration: const Duration(milliseconds: 300),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),
                 ),
@@ -222,24 +258,30 @@ class HomeScreenState extends State<HomeScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  LinearPercentIndicator(
-                    lineHeight: 30.0,
-                    animation: true,
-                    percent: _progress,
-                    backgroundColor: Colors.grey[300],
-                    progressColor: const Color.fromARGB(255, 164, 190, 151),
-                    center: Text(
-                      '${(_progress * 100).toStringAsFixed(1)}%',
-                      style: TextStyle(color: Colors.black),
-                    ),
-                  ),
-                  Expanded(child: _buildListView()),
-                ],
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            LinearPercentIndicator(
+              lineHeight: 30.0,
+              animation: true,
+              percent: _progress,
+              backgroundColor: Colors.grey[300],
+              linearGradient: LinearGradient(
+                colors: [primaryColor, secondaryColor],
+              ),
+              center: Text(
+                '${(_progress * 100).toStringAsFixed(1)}%',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+            const SizedBox(height: 16.0),
+            Expanded(child: _buildListView(primaryColor)),
+          ],
+        ),
+      ),
     );
   }
 }
