@@ -78,21 +78,32 @@ class HomeScreenState extends State<HomeScreen> {
           key: Key(sura.id.toString()),
           direction: DismissDirection.horizontal,
           onDismissed: (direction) async {
-            // await _dbHelper.updateSuraReviewedStatus(sura.id, false);
-            await _dbHelper.removeSelectedSura(sura.id);
+            final removedSura = _suras[index];
+            await _dbHelper.removeSelectedSura(removedSura.id);
             setState(() {
               _suras.removeAt(index);
             });
             if (context.mounted) {
               ScaffoldMessenger.of(context).hideCurrentSnackBar();
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text(
-                    '${sura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
-              ));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('${removedSura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
+                  action: SnackBarAction(
+                    label: AppLocalizations.of(context)!.undo,
+                    onPressed: () async {
+                      await _dbHelper.addSelectedSura(removedSura);
+                      setState(() {
+                        _suras.insert(index, removedSura);
+                      });
+                      _calculateProgress();
+                    },
+                  ),
+                ),
+              );
             }
-            await _updateProgress(sura);
+            await _updateProgress(removedSura);
             if (_progress >= 1.0) _showCompletionDialog();
-          },
+          }          ,
           background: Container(color: Colors.red),
           child: CheckboxListTile(
             title: Text('${sura.name} (${percentage.toStringAsFixed(1)}%)'),

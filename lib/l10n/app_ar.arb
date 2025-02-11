@@ -25,5 +25,6 @@
   "invalidInput": "مدخلات غير صالحة",
   "updateProgressFailed": "فشل في تحديث التقدم:",
   "clearDataFailed": "فشل في مسح البيانات:",
-  "suraRemoved": "تمت إزالتها"
+  "suraRemoved": "تمت إزالتها",
+  "undo": "تراجع"
 }

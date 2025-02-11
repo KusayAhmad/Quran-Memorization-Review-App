@@ -25,5 +25,6 @@
   "invalidInput": "Invalid input provided",
   "updateProgressFailed": "Failed to update progress:",
   "clearDataFailed": "Failed to clear data:",
-  "suraRemoved": "removed"
+  "suraRemoved": "Removed",
+  "undo": "Undo"
   }
