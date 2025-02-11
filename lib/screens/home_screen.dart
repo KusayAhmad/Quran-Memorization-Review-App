@@ -84,6 +84,7 @@ class HomeScreenState extends State<HomeScreen> {
               _suras.removeAt(index);
             });
             if (context.mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(
                 content: Text(
                     '${sura.name} ${AppLocalizations.of(context)!.suraRemoved}'),
