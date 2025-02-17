@@ -16,18 +16,34 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  Locale _locale = const Locale('ar');
+  Locale _locale = const Locale('en');
+  late bool _isDarkMode;
 
   @override
   void initState() {
     super.initState();
-    _loadLocale();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLocale();
+    });
   }
 
   Future<void> _loadLocale() async {
+    Locale deviceLocale = Localizations.localeOf(context);
+
     String? storedLanguageCode = await DatabaseHelper().getSelectedLanguage();
     if (storedLanguageCode != null) {
       setLocale(Locale(storedLanguageCode));
+    } else {
+      setLocale(deviceLocale.languageCode == 'ar' || deviceLocale.languageCode == 'en'
+          ? deviceLocale
+          : const Locale('ar'));
     }
   }
 
@@ -42,6 +58,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       title: 'مراجعة الورد اليومي',
       theme: ThemeData(
+        brightness: _isDarkMode ? Brightness.dark : Brightness.light,
         primarySwatch: Colors.green,
         fontFamily: 'Uthmanic',
       ),

@@ -13,13 +13,12 @@ class SelectSurasScreen extends StatefulWidget {
 
 class SelectSurasScreenState extends State<SelectSurasScreen> {
   final DatabaseHelper _dbHelper = DatabaseHelper();
-
   List<Sura> _allSuras = [];
   List<Sura> _filteredSuras = [];
   List<int> _selectedIds = [];
   String _searchText = '';
-
   String _sortMode = 'asc';
+  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -42,10 +41,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     setState(() {
       _allSuras = suras
           .map((s) => Sura(
-                id: s['id'] as int,
-                name: s['name'] as String,
-                pages: s['pages'] as int,
-              ))
+        id: s['id'] as int,
+        name: s['name'] as String,
+        pages: s['pages'] as int,
+      ))
           .toList();
 
       _filteredSuras = List.from(_allSuras);
@@ -94,8 +93,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     for (var sura in _allSuras) {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
-        print(
-            'Selected suras saved: ${_selectedIds.map((id) => _allSuras.firstWhere((s) => s.id == id).name).toList()}');
       } else {
         await _dbHelper.removeSelectedSura(sura.id);
       }
@@ -150,7 +147,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         backgroundColor:
-                            const Color.fromARGB(255, 226, 120, 112),
+                        const Color.fromARGB(255, 226, 120, 112),
                         content: Text(
                             AppLocalizations.of(context)!.invalidInput,
                             style: TextStyle(
@@ -170,7 +167,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   Future<void> _addSura(String name, int pages) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> result =
-        await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
+    await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
     final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
         ? result[0]['MAX(id)'] as int
         : 0;
@@ -247,15 +244,69 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    Widget listWidget;
-    listWidget = ListView.builder(
+    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
+    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink.shade50;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(AppLocalizations.of(context)!.selectSuras),
+        backgroundColor: primaryColor,
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: _sortSuras,
+            icon: const Icon(Icons.sort),
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<String>(
+                value: 'asc',
+                child: Text(AppLocalizations.of(context)!.sortAZ),
+              ),
+              PopupMenuItem<String>(
+                value: 'desc',
+                child: Text(AppLocalizations.of(context)!.sortZA),
+              ),
+            ],
+          ),
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              _showAddSuraDialog(context);
+            },
+          ),
+        ],
+      ),
+      body: Container(
+        color: backgroundColor,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  labelText: AppLocalizations.of(context)!.searchSuras,
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: _filterSuras,
+              ),
+            ),
+            Expanded(child: _buildListView()),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _saveSelection,
+        child: Text(AppLocalizations.of(context)!.save),
+      ),
+    );
+  }
+
+  Widget _buildListView() {
+    return ListView.builder(
       itemCount: _filteredSuras.length,
       itemBuilder: (context, index) {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
           title: Text(sura.name),
-          subtitle:
-              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {
@@ -287,53 +338,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           ),
         );
       },
-    );
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.selectSuras),
-        actions: [
-          PopupMenuButton<String>(
-            onSelected: _sortSuras,
-            icon: const Icon(Icons.sort),
-            itemBuilder: (BuildContext context) => [
-              PopupMenuItem<String>(
-                value: 'asc',
-                child: Text(AppLocalizations.of(context)!.sortAZ),
-              ),
-              PopupMenuItem<String>(
-                value: 'desc',
-                child: Text(AppLocalizations.of(context)!.sortZA),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              _showAddSuraDialog(context);
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              decoration: InputDecoration(
-                labelText: AppLocalizations.of(context)!.searchSuras,
-                prefixIcon: Icon(Icons.search),
-              ),
-              onChanged: _filterSuras,
-            ),
-          ),
-          Expanded(child: listWidget),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _saveSelection,
-        child: Text(AppLocalizations.of(context)!.save),
-      ),
     );
   }
 }

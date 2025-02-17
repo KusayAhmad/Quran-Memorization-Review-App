@@ -19,6 +19,7 @@ class HomeScreenState extends State<HomeScreen> {
   List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
+  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -111,21 +112,21 @@ class HomeScreenState extends State<HomeScreen> {
             child: CheckboxListTile(
               contentPadding:
               const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-              tileColor: Colors.white,
+              tileColor: _isDarkMode ? Colors.grey.shade800 : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
               ),
               title: Text(
                 '${sura.name} (${percentage.toStringAsFixed(1)}%)',
-                style: const TextStyle(
-                  color: Colors.black,
+                style: TextStyle(
+                  color: _isDarkMode ? Colors.white : Colors.white70,
                   fontSize: 18.0,
                 ),
               ),
               subtitle: Text(
                 '${sura.pages} ${AppLocalizations.of(context)!.pages}',
-                style: const TextStyle(
-                  color: Colors.black87,
+                style: TextStyle(
+                  color: _isDarkMode ? Colors.white70 : Colors.black87,
                   fontSize: 14.0,
                 ),
               ),
@@ -148,10 +149,11 @@ class HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: _isDarkMode ? Colors.grey.shade900 : Colors.white,
         title: Text(
           AppLocalizations.of(context)!.congratulations,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: _isDarkMode ? Colors.white : Colors.black,
             fontSize: 24.0,
             fontWeight: FontWeight.bold,
           ),
@@ -159,8 +161,8 @@ class HomeScreenState extends State<HomeScreen> {
         content: Text(
           AppLocalizations.of(context)!.reviewCompleted,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.black,
+          style: TextStyle(
+            color: _isDarkMode ? Colors.white : Colors.black,
             fontSize: 18.0,
           ),
         ),
@@ -201,17 +203,28 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = Colors.pink.shade300;
-    final Color secondaryColor = Colors.pink.shade200;
+    final Color primaryColor =
+    _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
+    final Color secondaryColor =
+    _isDarkMode ? Colors.grey.shade800 : Colors.pink.shade200;
+    final Color backgroundColor =
+    _isDarkMode ? Colors.black : Colors.pink.shade50;
 
     return Scaffold(
-      backgroundColor: Colors.pink.shade50,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.homeScreenTitle),
+        title: Text(
+          AppLocalizations.of(context)!.homeScreenTitle,
+          style: TextStyle(color: _isDarkMode ? Colors.white : Colors.black),
+        ),
         backgroundColor: primaryColor,
         actions: [
           PopupMenuButton<Locale>(
-            icon: const Icon(Icons.language, size: 24.0),
+            icon: Icon(
+              Icons.language,
+              size: 24.0,
+              color: _isDarkMode ? Colors.white : Colors.black,
+            ),
             onSelected: (Locale locale) async {
               await DatabaseHelper().setSelectedLanguage(locale.languageCode);
               widget.setLocale(locale);
@@ -221,20 +234,35 @@ class HomeScreenState extends State<HomeScreen> {
                 value: Locale('en'),
                 child: Text(
                   AppLocalizations.of(context)!.languageEnglish,
-                  style: const TextStyle(color: Colors.black),
+                  style: TextStyle(color: _isDarkMode ? Colors.black : Colors.black),
                 ),
               ),
               PopupMenuItem(
                 value: Locale('ar'),
                 child: Text(
                   AppLocalizations.of(context)!.languageArabic,
-                  style: const TextStyle(color: Colors.black),
+                  style: TextStyle(color: _isDarkMode ? Colors.black : Colors.black),
                 ),
               ),
             ],
           ),
           IconButton(
-            icon: const Icon(Icons.edit, size: 24.0),
+            icon: Icon(
+              _isDarkMode ? Icons.wb_sunny : Icons.nights_stay,
+              size: 24.0,
+              color: _isDarkMode ? Colors.white : Colors.black,
+            ),
+            tooltip:
+            _isDarkMode ? 'تبديل الوضع النهاري' : 'تبديل الوضع الليلي',
+            onPressed: () {
+              setState(() {
+                _isDarkMode = !_isDarkMode;
+              });
+            },
+          ),
+          IconButton(
+            icon: Icon(Icons.edit,
+                size: 24.0, color: _isDarkMode ? Colors.white : Colors.black),
             tooltip: AppLocalizations.of(context)!.edit,
             onPressed: () async {
               final result = await Navigator.push(
@@ -271,8 +299,8 @@ class HomeScreenState extends State<HomeScreen> {
               ),
               center: Text(
                 '${(_progress * 100).toStringAsFixed(1)}%',
-                style: const TextStyle(
-                  color: Colors.black,
+                style: TextStyle(
+                  color: _isDarkMode ? Colors.white : Colors.black,
                   fontWeight: FontWeight.bold,
                 ),
               ),
