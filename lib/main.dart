@@ -2,14 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import '../screens/home_screen.dart';
-import '../database/database_helper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  runApp(MyApp(prefs: prefs));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final SharedPreferences prefs;
+
+  const MyApp({super.key, required this.prefs});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -22,28 +26,16 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadLocale();
-    });
+    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
+    _loadLocale();
   }
 
   Future<void> _loadLocale() async {
-    Locale deviceLocale = Localizations.localeOf(context);
-
-    String? storedLanguageCode = await DatabaseHelper().getSelectedLanguage();
+    String? storedLanguageCode = widget.prefs.getString('selectedLanguage');
     if (storedLanguageCode != null) {
       setLocale(Locale(storedLanguageCode));
     } else {
-      setLocale(deviceLocale.languageCode == 'ar' || deviceLocale.languageCode == 'en'
-          ? deviceLocale
-          : const Locale('ar'));
+      setLocale(const Locale('ar'));
     }
   }
 
@@ -73,7 +65,7 @@ class _MyAppState extends State<MyApp> {
         Locale('ar'),
       ],
       locale: _locale,
-      home: HomeScreen(setLocale: setLocale),
+      home: HomeScreen(setLocale: setLocale, prefs: widget.prefs),
     );
   }
 }

@@ -4,11 +4,13 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
+  final SharedPreferences prefs;
 
-  const HomeScreen({super.key, required this.setLocale});
+  const HomeScreen({super.key, required this.setLocale, required this.prefs});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -24,6 +26,7 @@ class HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
     _loadData();
   }
 
@@ -46,8 +49,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
-    final completed =
-    _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+    final completed = _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
@@ -189,8 +191,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _clearReviewedSuras() async {
     try {
-      final db = await _dbHelper.database;
-      await db.delete('selected_suras');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('selected_suras');
       _loadData();
     } catch (e) {
       if (mounted) {
@@ -269,7 +271,7 @@ class HomeScreenState extends State<HomeScreen> {
                 context,
                 PageRouteBuilder(
                   pageBuilder: (_, __, ___) =>
-                      SelectSurasScreen(setLocale: widget.setLocale),
+                      SelectSurasScreen(setLocale: widget.setLocale, prefs: widget.prefs),
                   transitionDuration: const Duration(milliseconds: 300),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),

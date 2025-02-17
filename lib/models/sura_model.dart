@@ -11,11 +11,17 @@ class Sura {
     this.isCompleted = false,
   });
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'name': name,
-      'pages': pages,
-    };
-  }
+  factory Sura.fromJson(Map<String, dynamic> json) => Sura(
+    id: json['id'],
+    name: json['name'],
+    pages: json['pages'],
+    isCompleted: json['isCompleted'] ?? false,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'pages': pages,
+    'isCompleted': isCompleted,
+  };
 }

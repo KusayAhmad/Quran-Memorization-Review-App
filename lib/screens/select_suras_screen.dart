@@ -2,10 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
-  const SelectSurasScreen({super.key, required this.setLocale});
+  final SharedPreferences prefs;
+
+  const SelectSurasScreen({super.key, required this.setLocale, required this.prefs});
 
   @override
   SelectSurasScreenState createState() => SelectSurasScreenState();
@@ -23,30 +26,23 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   @override
   void initState() {
     super.initState();
+    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
     _loadSortMode();
     _loadAllSuras();
     _loadSelectedSuras();
   }
 
   Future<void> _loadSortMode() async {
-    String? savedSortMode = await _dbHelper.getPreference('sortMode');
+    String? savedSortMode = widget.prefs.getString('sortMode');
     setState(() {
       _sortMode = savedSortMode ?? 'asc';
     });
   }
 
   void _loadAllSuras() async {
-    final db = await _dbHelper.database;
-    final suras = await db.query(DatabaseHelper.tableSuras);
+    final allSuras = await _dbHelper.getAllSuras();
     setState(() {
-      _allSuras = suras
-          .map((s) => Sura(
-        id: s['id'] as int,
-        name: s['name'] as String,
-        pages: s['pages'] as int,
-      ))
-          .toList();
-
+      _allSuras = allSuras;
       _filteredSuras = List.from(_allSuras);
       _sortFilteredSuras();
     });
@@ -165,16 +161,14 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   Future<void> _addSura(String name, int pages) async {
-    final db = await _dbHelper.database;
-    final List<Map<String, dynamic>> result =
-    await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
-    final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
-        ? result[0]['MAX(id)'] as int
+    final allSuras = await _dbHelper.getAllSuras();
+    final int highestId = allSuras.isNotEmpty
+        ? allSuras.map((s) => s.id).reduce((a, b) => a > b ? a : b)
         : 0;
     final newId = highestId + 1;
 
     final newSura = Sura(id: newId, name: name, pages: pages);
-    await _dbHelper.insertSura(newSura);
+    await _dbHelper.addSura(newSura);
     _loadAllSuras();
   }
 
