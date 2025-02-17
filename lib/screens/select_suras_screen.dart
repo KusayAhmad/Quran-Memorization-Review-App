@@ -7,8 +7,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
   final SharedPreferences prefs;
+  final bool isDarkMode;
 
-  const SelectSurasScreen({super.key, required this.setLocale, required this.prefs});
+  const SelectSurasScreen({super.key, required this.setLocale, required this.prefs, required this.isDarkMode});
 
   @override
   SelectSurasScreenState createState() => SelectSurasScreenState();
@@ -21,12 +22,12 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   List<int> _selectedIds = [];
   String _searchText = '';
   String _sortMode = 'asc';
-  bool _isDarkMode = false;
+  late bool _isDarkMode;
 
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
+    _isDarkMode = widget.isDarkMode;
     _loadSortMode();
     _loadAllSuras();
     _loadSelectedSuras();
@@ -81,7 +82,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     if (_sortMode == 'asc') {
       _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
     } else if (_sortMode == 'desc') {
-      _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
+      _filteredSuras.sort((a, b) => b.name.compareTo(b.name));
     }
   }
 
@@ -299,6 +300,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       itemBuilder: (context, index) {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
+          tileColor: _isDarkMode ? Colors.grey.shade800 : Colors.white,
           title: Text(sura.name),
           subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: _selectedIds.contains(sura.id),

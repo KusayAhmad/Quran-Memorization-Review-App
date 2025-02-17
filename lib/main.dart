@@ -45,6 +45,13 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void setIsDarkMode(bool value) async {
+    setState(() {
+      _isDarkMode = value;
+    });
+    await widget.prefs.setBool('isDarkMode', value);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -65,7 +72,7 @@ class _MyAppState extends State<MyApp> {
         Locale('ar'),
       ],
       locale: _locale,
-      home: HomeScreen(setLocale: setLocale, prefs: widget.prefs),
+      home: HomeScreen(setLocale: setLocale, prefs: widget.prefs, isDarkMode: _isDarkMode, setIsDarkMode: setIsDarkMode),
     );
   }
 }

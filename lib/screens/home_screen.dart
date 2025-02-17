@@ -1,3 +1,4 @@
+// [lib/screens/home_screen.dart]
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
@@ -9,8 +10,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
   final SharedPreferences prefs;
+  final bool isDarkMode;
+  final Function(bool) setIsDarkMode;
 
-  const HomeScreen({super.key, required this.setLocale, required this.prefs});
+  const HomeScreen({super.key, required this.setLocale, required this.prefs, required this.isDarkMode, required this.setIsDarkMode});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -21,12 +24,12 @@ class HomeScreenState extends State<HomeScreen> {
   List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
-  bool _isDarkMode = false;
+  late bool _isDarkMode;
 
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
+    _isDarkMode = widget.isDarkMode;
     _loadData();
   }
 
@@ -257,6 +260,7 @@ class HomeScreenState extends State<HomeScreen> {
             tooltip:
             _isDarkMode ? 'تبديل الوضع النهاري' : 'تبديل الوضع الليلي',
             onPressed: () {
+              widget.setIsDarkMode(!_isDarkMode);
               setState(() {
                 _isDarkMode = !_isDarkMode;
               });
@@ -270,8 +274,10 @@ class HomeScreenState extends State<HomeScreen> {
               final result = await Navigator.push(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) =>
-                      SelectSurasScreen(setLocale: widget.setLocale, prefs: widget.prefs),
+                  pageBuilder: (_, __, ___) => SelectSurasScreen(
+                      setLocale: widget.setLocale,
+                      prefs: widget.prefs,
+                      isDarkMode: _isDarkMode), // Pass _isDarkMode here
                   transitionDuration: const Duration(milliseconds: 300),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),
