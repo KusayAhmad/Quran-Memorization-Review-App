@@ -6,6 +6,7 @@ import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -60,7 +61,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateProgress(Sura sura) async {
     try {
-      await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
+      await _dbHelper.updateSuraReviewedStatus(sura.id);
       _calculateProgress();
     } catch (e) {
       if (mounted) {
@@ -124,25 +125,39 @@ class HomeScreenState extends State<HomeScreen> {
               title: Text(
                 '${sura.name} (${percentage.toStringAsFixed(1)}%)',
                 style: TextStyle(
-                  color: _isDarkMode ? Colors.white : Colors.white70,
+                  color: _isDarkMode ? Colors.white : Colors.black,
                   fontSize: 18.0,
                 ),
               ),
-              subtitle: Text(
-                '${sura.pages} ${AppLocalizations.of(context)!.pages}',
-                style: TextStyle(
-                  color: _isDarkMode ? Colors.white70 : Colors.black87,
-                  fontSize: 14.0,
-                ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${sura.pages} ${AppLocalizations.of(context)!.pages}',
+                    style: TextStyle(
+                      color: _isDarkMode ? Colors.white70 : Colors.black87,
+                      fontSize: 14.0,
+                    ),
+                  ),
+
+                ],
               ),
               value: sura.isCompleted,
               onChanged: (value) async {
                 setState(() {
                   sura.isCompleted = value ?? false;
+                  if (sura.isCompleted) {
+                    sura.lastReadDate = DateTime.now();
+                    _dbHelper.updateSuraReviewedStatus(sura.id);
+                    print('✅ homescreen lastReadDate  ${sura.name}: ${sura.lastReadDate}');
+                  } else {
+                    sura.lastReadDate = null;
+                  }
                 });
                 await _updateProgress(sura);
                 if (_progress >= 1.0) _showCompletionDialog(primaryColor);
-              },
+              }
+              ,
             ),
           ),
         );
@@ -194,17 +209,33 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _clearReviewedSuras() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('selected_suras');
-      _loadData();
+      final selectedSuras = await _dbHelper.getSelectedSuras(); // استرجاع السور المحددة
+
+      // إعادة تعيين isCompleted لكل سورة دون حذف lastReadDate
+      for (var sura in selectedSuras) {
+        sura.isCompleted = false; // إعادة تعيين الحالة
+      }
+
+      // حفظ السور المعدلة مرة أخرى
+      await _dbHelper.saveSelectedSuras(selectedSuras);
+
+      // إزالة السور من HomeScreen
+      await _dbHelper.removeAllSelectedSuras(); // دالة جديدة لإزالة جميع السور من العرض
+
+      _loadData(); // إعادة تحميل البيانات في HomeScreen
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to clear data: $e')),
+          SnackBar(content: Text('فشل في مسح البيانات: $e')),
         );
       }
     }
   }
+
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -277,7 +308,7 @@ class HomeScreenState extends State<HomeScreen> {
                   pageBuilder: (_, __, ___) => SelectSurasScreen(
                       setLocale: widget.setLocale,
                       prefs: widget.prefs,
-                      isDarkMode: _isDarkMode), // Pass _isDarkMode here
+                      isDarkMode: _isDarkMode),
                   transitionDuration: const Duration(milliseconds: 300),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),

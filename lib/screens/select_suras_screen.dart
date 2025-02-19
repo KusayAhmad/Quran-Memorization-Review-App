@@ -3,6 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -54,7 +55,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     setState(() {
       _selectedIds = selectedSuras.map((s) => s.id).toList();
     });
+
+    // 🔍 طباعة كل سورة وقيمتها المخزنة لـ lastReadDate
+    for (var sura in selectedSuras) {
+      print('📢 [SelectSurasScreen] : ${sura.name}, Lastread: ${sura.lastReadDate}');
+    }
   }
+
 
   void _filterSuras(String searchText) {
     setState(() {
@@ -91,13 +98,16 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
       } else {
-        await _dbHelper.removeSelectedSura(sura.id);
+        // إعادة تعيين isCompleted إلى false بدلاً من إزالة السورة
+        sura.isCompleted = false;
+        await _dbHelper.updateSura(sura); // تحديث السورة في قاعدة البيانات
       }
     }
     if (mounted) {
       Navigator.pop(context, true);
     }
   }
+
 
   void _showAddSuraDialog(BuildContext context) {
     String suraName = '';
@@ -239,8 +249,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
-    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink.shade50;
+    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink
+        .shade300;
+    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink
+        .shade50;
 
     return Scaffold(
       appBar: AppBar(
@@ -250,7 +262,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           PopupMenuButton<String>(
             onSelected: _sortSuras,
             icon: const Icon(Icons.sort),
-            itemBuilder: (BuildContext context) => [
+            itemBuilder: (BuildContext context) =>
+            [
               PopupMenuItem<String>(
                 value: 'asc',
                 child: Text(AppLocalizations.of(context)!.sortAZ),
@@ -302,7 +315,17 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         return CheckboxListTile(
           tileColor: _isDarkMode ? Colors.grey.shade800 : Colors.white,
           title: Text(sura.name),
-          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+              if (sura.lastReadDate != null)
+                Text(
+                  'آخر قراءة: ${DateFormat('yyyy-MM-dd').format(sura.lastReadDate!)}',
+                  style: TextStyle(fontSize: 12.0),
+                ),
+            ],
+          ),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {

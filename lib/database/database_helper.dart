@@ -13,24 +13,37 @@ class DatabaseHelper {
   // Sura operations
   Future<void> addSelectedSura(Sura sura) async {
     final selected = await getSelectedSuras();
-    selected.add(sura);
-    await _saveSelectedSuras(selected);
+    if (!selected.any((element) => element.id == sura.id)) {
+      selected.add(sura);
+      await saveSelectedSuras(selected);
+    }
   }
 
   Future<void> removeSelectedSura(int id) async {
     final selected = await getSelectedSuras();
     selected.removeWhere((s) => s.id == id);
-    await _saveSelectedSuras(selected);
+    await saveSelectedSuras(selected);
   }
 
   Future<List<Sura>> getSelectedSuras() async {
     final prefs = await _prefs;
     final jsonString = prefs.getString(_selectedSurasKey) ?? '[]';
     final List<dynamic> jsonList = json.decode(jsonString);
-    return jsonList.map((e) => Sura.fromJson(e)).toList();
+
+    // تحويل JSON إلى كائنات Sura
+    final suras = jsonList.map((e) => Sura.fromJson(e)).toList();
+
+    // 🔍 طباعة قيمة lastReadDate لكل سورة
+    for (var sura in suras) {
+      print('📢 getSelectedSuras ${sura.id}, Lastread: ${sura.lastReadDate}');
+    }
+
+    return suras;
   }
 
-  Future<void> _saveSelectedSuras(List<Sura> suras) async {
+
+
+  Future<void> saveSelectedSuras(List<Sura> suras) async {
     final prefs = await _prefs;
     final jsonList = suras.map((s) => s.toJson()).toList();
     await prefs.setString(_selectedSurasKey, json.encode(jsonList));
@@ -97,12 +110,40 @@ class DatabaseHelper {
   }
 
   // Sura status operations
-  Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
+  Future<void> updateSuraReviewedStatus(int suraId) async {
     final selected = await getSelectedSuras();
     final index = selected.indexWhere((s) => s.id == suraId);
     if (index != -1) {
-      selected[index].isCompleted = isCompleted;
-      await _saveSelectedSuras(selected);
+      selected[index].isCompleted = true;
+      selected[index].lastReadDate = DateTime.now();
+
+      // ✅ حفظ البيانات مجددًا
+      await saveSelectedSuras(selected);
+      print('📌 updateSuraReviewedStatus lastReadDate  ${selected[index].id}: ${selected[index].lastReadDate}');
     }
   }
+
+  Future<void> removeAllSelectedSuras() async {
+    try {
+      final selectedSuras = await getSelectedSuras(); // استرجاع السور المحددة
+
+      // إعادة تعيين isCompleted لكل سورة دون حذف lastReadDate
+      for (var sura in selectedSuras) {
+        sura.isCompleted = false; // إعادة تعيين الحالة
+      }
+
+      // حفظ السور المعدلة مرة أخرى
+      await saveSelectedSuras(selectedSuras);
+
+      // إزالة جميع السور من SharedPreferences
+      final prefs = await _prefs;
+      await prefs.remove(_selectedSurasKey); // حذف جميع السور المحددة
+
+    } catch (e) {
+      // التعامل مع الأخطاء
+      print('فشل في مسح السور المحددة: $e');
+    }
+  }
+
+
 }
