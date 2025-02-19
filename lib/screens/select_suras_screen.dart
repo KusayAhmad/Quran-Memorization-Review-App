@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
+
   const SelectSurasScreen({super.key, required this.setLocale});
 
   @override
@@ -41,10 +43,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     setState(() {
       _allSuras = suras
           .map((s) => Sura(
-        id: s['id'] as int,
-        name: s['name'] as String,
-        pages: s['pages'] as int,
-      ))
+                id: s['id'] as int,
+                name: s['name'] as String,
+                pages: s['pages'] as int,
+              ))
           .toList();
 
       _filteredSuras = List.from(_allSuras);
@@ -167,7 +169,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   Future<void> _addSura(String name, int pages) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> result =
-    await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
+        await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
     final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
         ? result[0]['MAX(id)'] as int
         : 0;
@@ -244,8 +246,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
-    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink.shade50;
+    final Color primaryColor =
+        _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
+    final Color backgroundColor =
+        _isDarkMode ? Colors.black : Colors.pink.shade50;
 
     return Scaffold(
       appBar: AppBar(
@@ -306,7 +310,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
           title: Text(sura.name),
-          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          subtitle:
+              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {

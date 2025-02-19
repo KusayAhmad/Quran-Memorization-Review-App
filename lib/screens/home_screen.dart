@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:percent_indicator/percent_indicator.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
@@ -47,7 +47,7 @@ class HomeScreenState extends State<HomeScreen> {
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
     final completed =
-    _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+        _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });

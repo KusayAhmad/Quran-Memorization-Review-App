@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import '../screens/home_screen.dart';
+
 import '../database/database_helper.dart';
+import '../screens/home_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -41,9 +42,10 @@ class _MyAppState extends State<MyApp> {
     if (storedLanguageCode != null) {
       setLocale(Locale(storedLanguageCode));
     } else {
-      setLocale(deviceLocale.languageCode == 'ar' || deviceLocale.languageCode == 'en'
-          ? deviceLocale
-          : const Locale('ar'));
+      setLocale(
+          deviceLocale.languageCode == 'ar' || deviceLocale.languageCode == 'en'
+              ? deviceLocale
+              : const Locale('ar'));
     }
   }
 
