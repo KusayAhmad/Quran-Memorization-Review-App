@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
-  final SharedPreferences prefs;
-  final bool isDarkMode;
-
-  const SelectSurasScreen({super.key, required this.setLocale, required this.prefs, required this.isDarkMode});
+  const SelectSurasScreen({super.key, required this.setLocale});
 
   @override
   SelectSurasScreenState createState() => SelectSurasScreenState();
@@ -23,28 +18,35 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   List<int> _selectedIds = [];
   String _searchText = '';
   String _sortMode = 'asc';
-  late bool _isDarkMode;
+  bool _isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.isDarkMode;
     _loadSortMode();
     _loadAllSuras();
     _loadSelectedSuras();
   }
 
   Future<void> _loadSortMode() async {
-    String? savedSortMode = widget.prefs.getString('sortMode');
+    String? savedSortMode = await _dbHelper.getPreference('sortMode');
     setState(() {
       _sortMode = savedSortMode ?? 'asc';
     });
   }
 
   void _loadAllSuras() async {
-    final allSuras = await _dbHelper.getAllSuras();
+    final db = await _dbHelper.database;
+    final suras = await db.query(DatabaseHelper.tableSuras);
     setState(() {
-      _allSuras = allSuras;
+      _allSuras = suras
+          .map((s) => Sura(
+        id: s['id'] as int,
+        name: s['name'] as String,
+        pages: s['pages'] as int,
+      ))
+          .toList();
+
       _filteredSuras = List.from(_allSuras);
       _sortFilteredSuras();
     });
@@ -55,13 +57,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     setState(() {
       _selectedIds = selectedSuras.map((s) => s.id).toList();
     });
-
-    // 🔍 طباعة كل سورة وقيمتها المخزنة لـ lastReadDate
-    for (var sura in selectedSuras) {
-      print('📢 [SelectSurasScreen] : ${sura.name}, Lastread: ${sura.lastReadDate}');
-    }
   }
-
 
   void _filterSuras(String searchText) {
     setState(() {
@@ -89,7 +85,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     if (_sortMode == 'asc') {
       _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
     } else if (_sortMode == 'desc') {
-      _filteredSuras.sort((a, b) => b.name.compareTo(b.name));
+      _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
     }
   }
 
@@ -98,16 +94,13 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
       } else {
-        // إعادة تعيين isCompleted إلى false بدلاً من إزالة السورة
-        sura.isCompleted = false;
-        await _dbHelper.updateSura(sura); // تحديث السورة في قاعدة البيانات
+        await _dbHelper.removeSelectedSura(sura.id);
       }
     }
     if (mounted) {
       Navigator.pop(context, true);
     }
   }
-
 
   void _showAddSuraDialog(BuildContext context) {
     String suraName = '';
@@ -172,14 +165,16 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   Future<void> _addSura(String name, int pages) async {
-    final allSuras = await _dbHelper.getAllSuras();
-    final int highestId = allSuras.isNotEmpty
-        ? allSuras.map((s) => s.id).reduce((a, b) => a > b ? a : b)
+    final db = await _dbHelper.database;
+    final List<Map<String, dynamic>> result =
+    await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
+    final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
+        ? result[0]['MAX(id)'] as int
         : 0;
     final newId = highestId + 1;
 
     final newSura = Sura(id: newId, name: name, pages: pages);
-    await _dbHelper.addSura(newSura);
+    await _dbHelper.insertSura(newSura);
     _loadAllSuras();
   }
 
@@ -249,10 +244,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink
-        .shade300;
-    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink
-        .shade50;
+    final Color primaryColor = _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
+    final Color backgroundColor = _isDarkMode ? Colors.black : Colors.pink.shade50;
 
     return Scaffold(
       appBar: AppBar(
@@ -262,8 +255,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           PopupMenuButton<String>(
             onSelected: _sortSuras,
             icon: const Icon(Icons.sort),
-            itemBuilder: (BuildContext context) =>
-            [
+            itemBuilder: (BuildContext context) => [
               PopupMenuItem<String>(
                 value: 'asc',
                 child: Text(AppLocalizations.of(context)!.sortAZ),
@@ -313,19 +305,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       itemBuilder: (context, index) {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
-          tileColor: _isDarkMode ? Colors.grey.shade800 : Colors.white,
           title: Text(sura.name),
-          subtitle: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
-              if (sura.lastReadDate != null)
-                Text(
-                  'آخر قراءة: ${DateFormat('yyyy-MM-dd').format(sura.lastReadDate!)}',
-                  style: TextStyle(fontSize: 12.0),
-                ),
-            ],
-          ),
+          subtitle: Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {

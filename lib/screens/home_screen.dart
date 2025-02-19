@@ -1,20 +1,14 @@
-// [lib/screens/home_screen.dart]
 import 'package:flutter/material.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../database/database_helper.dart';
 import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
-  final SharedPreferences prefs;
-  final bool isDarkMode;
-  final Function(bool) setIsDarkMode;
 
-  const HomeScreen({super.key, required this.setLocale, required this.prefs, required this.isDarkMode, required this.setIsDarkMode});
+  const HomeScreen({super.key, required this.setLocale});
 
   @override
   HomeScreenState createState() => HomeScreenState();
@@ -25,12 +19,11 @@ class HomeScreenState extends State<HomeScreen> {
   List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
-  late bool _isDarkMode;
+  bool _isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.isDarkMode;
     _loadData();
   }
 
@@ -53,7 +46,8 @@ class HomeScreenState extends State<HomeScreen> {
 
   void _calculateProgress() {
     final total = _suras.fold(0, (sum, s) => sum + s.pages);
-    final completed = _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+    final completed =
+    _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
     setState(() {
       _progress = total > 0 ? completed / total : 0.0;
     });
@@ -61,7 +55,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _updateProgress(Sura sura) async {
     try {
-      await _dbHelper.updateSuraReviewedStatus(sura.id);
+      await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
       _calculateProgress();
     } catch (e) {
       if (mounted) {
@@ -125,39 +119,25 @@ class HomeScreenState extends State<HomeScreen> {
               title: Text(
                 '${sura.name} (${percentage.toStringAsFixed(1)}%)',
                 style: TextStyle(
-                  color: _isDarkMode ? Colors.white : Colors.black,
+                  color: _isDarkMode ? Colors.white : Colors.white70,
                   fontSize: 18.0,
                 ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${sura.pages} ${AppLocalizations.of(context)!.pages}',
-                    style: TextStyle(
-                      color: _isDarkMode ? Colors.white70 : Colors.black87,
-                      fontSize: 14.0,
-                    ),
-                  ),
-
-                ],
+              subtitle: Text(
+                '${sura.pages} ${AppLocalizations.of(context)!.pages}',
+                style: TextStyle(
+                  color: _isDarkMode ? Colors.white70 : Colors.black87,
+                  fontSize: 14.0,
+                ),
               ),
               value: sura.isCompleted,
               onChanged: (value) async {
                 setState(() {
                   sura.isCompleted = value ?? false;
-                  if (sura.isCompleted) {
-                    sura.lastReadDate = DateTime.now();
-                    _dbHelper.updateSuraReviewedStatus(sura.id);
-                    print('✅ homescreen lastReadDate  ${sura.name}: ${sura.lastReadDate}');
-                  } else {
-                    sura.lastReadDate = null;
-                  }
                 });
                 await _updateProgress(sura);
                 if (_progress >= 1.0) _showCompletionDialog(primaryColor);
-              }
-              ,
+              },
             ),
           ),
         );
@@ -209,33 +189,17 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _clearReviewedSuras() async {
     try {
-      final selectedSuras = await _dbHelper.getSelectedSuras(); // استرجاع السور المحددة
-
-      // إعادة تعيين isCompleted لكل سورة دون حذف lastReadDate
-      for (var sura in selectedSuras) {
-        sura.isCompleted = false; // إعادة تعيين الحالة
-      }
-
-      // حفظ السور المعدلة مرة أخرى
-      await _dbHelper.saveSelectedSuras(selectedSuras);
-
-      // إزالة السور من HomeScreen
-      await _dbHelper.removeAllSelectedSuras(); // دالة جديدة لإزالة جميع السور من العرض
-
-      _loadData(); // إعادة تحميل البيانات في HomeScreen
+      final db = await _dbHelper.database;
+      await db.delete('selected_suras');
+      _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('فشل في مسح البيانات: $e')),
+          SnackBar(content: Text('Failed to clear data: $e')),
         );
       }
     }
   }
-
-
-
-
-
 
   @override
   Widget build(BuildContext context) {
@@ -291,7 +255,6 @@ class HomeScreenState extends State<HomeScreen> {
             tooltip:
             _isDarkMode ? 'تبديل الوضع النهاري' : 'تبديل الوضع الليلي',
             onPressed: () {
-              widget.setIsDarkMode(!_isDarkMode);
               setState(() {
                 _isDarkMode = !_isDarkMode;
               });
@@ -305,10 +268,8 @@ class HomeScreenState extends State<HomeScreen> {
               final result = await Navigator.push(
                 context,
                 PageRouteBuilder(
-                  pageBuilder: (_, __, ___) => SelectSurasScreen(
-                      setLocale: widget.setLocale,
-                      prefs: widget.prefs,
-                      isDarkMode: _isDarkMode),
+                  pageBuilder: (_, __, ___) =>
+                      SelectSurasScreen(setLocale: widget.setLocale),
                   transitionDuration: const Duration(milliseconds: 300),
                   transitionsBuilder: (_, anim, __, child) =>
                       FadeTransition(opacity: anim, child: child),

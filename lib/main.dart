@@ -2,18 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import '../screens/home_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import '../database/database_helper.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  final prefs = await SharedPreferences.getInstance();
-  runApp(MyApp(prefs: prefs));
+void main() {
+  runApp(const MyApp());
 }
 
 class MyApp extends StatefulWidget {
-  final SharedPreferences prefs;
-
-  const MyApp({super.key, required this.prefs});
+  const MyApp({super.key});
 
   @override
   State<MyApp> createState() => _MyAppState();
@@ -26,16 +22,28 @@ class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.prefs.getBool('isDarkMode') ?? false;
-    _loadLocale();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLocale();
+    });
   }
 
   Future<void> _loadLocale() async {
-    String? storedLanguageCode = widget.prefs.getString('selectedLanguage');
+    Locale deviceLocale = Localizations.localeOf(context);
+
+    String? storedLanguageCode = await DatabaseHelper().getSelectedLanguage();
     if (storedLanguageCode != null) {
       setLocale(Locale(storedLanguageCode));
     } else {
-      setLocale(const Locale('ar'));
+      setLocale(deviceLocale.languageCode == 'ar' || deviceLocale.languageCode == 'en'
+          ? deviceLocale
+          : const Locale('ar'));
     }
   }
 
@@ -43,13 +51,6 @@ class _MyAppState extends State<MyApp> {
     setState(() {
       _locale = value;
     });
-  }
-
-  void setIsDarkMode(bool value) async {
-    setState(() {
-      _isDarkMode = value;
-    });
-    await widget.prefs.setBool('isDarkMode', value);
   }
 
   @override
@@ -72,7 +73,7 @@ class _MyAppState extends State<MyApp> {
         Locale('ar'),
       ],
       locale: _locale,
-      home: HomeScreen(setLocale: setLocale, prefs: widget.prefs, isDarkMode: _isDarkMode, setIsDarkMode: setIsDarkMode),
+      home: HomeScreen(setLocale: setLocale),
     );
   }
 }
