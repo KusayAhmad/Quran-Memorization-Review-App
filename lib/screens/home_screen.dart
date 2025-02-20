@@ -58,6 +58,18 @@ class HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  String _getFormattedReviewedPages() {
+    double reviewedPages =
+        _suras.where((s) => s.isCompleted).fold(0.0, (sum, s) => sum + s.pages);
+    return reviewedPages.toStringAsFixed(2);
+  }
+
+  void _checkCompletion(Color primaryColor) {
+    if (_progress >= 1.0) {
+      _showCompletionDialog(primaryColor, _getFormattedReviewedPages());
+    }
+  }
+
   Future<void> _updateProgress(Sura sura) async {
     try {
       await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
@@ -111,15 +123,7 @@ class HomeScreenState extends State<HomeScreen> {
                 );
               }
               await _updateProgress(removedSura);
-              if (_progress >= 1.0) {
-                double reviewedPages = double.parse(
-                  _suras
-                      .where((s) => s.isCompleted)
-                      .fold(0.0, (sum, s) => sum + s.pages)
-                      .toStringAsFixed(2),
-                );
-                _showCompletionDialog(primaryColor, reviewedPages);
-              }
+              _checkCompletion(primaryColor);
             },
             background: Container(color: Colors.redAccent),
             child: CheckboxListTile(
@@ -152,14 +156,7 @@ class HomeScreenState extends State<HomeScreen> {
                   sura.isCompleted = value ?? false;
                 });
                 await _updateProgress(sura);
-                if (_progress >= 1.0) {
-                  double reviewedPages = _suras
-                      .where((s) => s.isCompleted)
-                      .fold(0.0, (sum, s) => sum + s.pages);
-
-                  String formattedPages = reviewedPages.toStringAsFixed(2);
-                  _showCompletionDialog(primaryColor, formattedPages);
-                }
+                _checkCompletion(primaryColor);
               },
             ),
           ),

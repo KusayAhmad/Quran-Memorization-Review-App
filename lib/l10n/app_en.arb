@@ -28,7 +28,7 @@
   "suraRemoved": "Removed",
   "undo": "Undo",
   "select_at_least_one_sura": "Please select at least one surah before saving.",
-  "reviewCompletedWithPages": "YYou have completed your review for today (＾ᗜ＾).\nMay Allah accept and grant steadfastness\n\nPages reviewed: {pages}",
+  "reviewCompletedWithPages": "You have completed your review for today (＾ᗜ＾).\nMay Allah accept and grant steadfastness\n\nPages reviewed: {pages}",
   "@reviewCompletedWithPages": {
     "description": "Shown when the user completes the review, including the number of pages.",
     "placeholders": {
