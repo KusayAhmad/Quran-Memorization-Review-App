@@ -85,11 +85,12 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   void _sortFilteredSuras() {
-    if (_sortMode == 'asc') {
-      _filteredSuras.sort((a, b) => a.name.compareTo(b.name));
-    } else if (_sortMode == 'desc') {
-      _filteredSuras.sort((a, b) => b.name.compareTo(a.name));
-    }
+    _filteredSuras.sort((a, b) {
+      int aNum = int.tryParse(a.name) ?? 0;
+      int bNum = int.tryParse(b.name) ?? 0;
+
+      return _sortMode == 'asc' ? aNum.compareTo(bNum) : bNum.compareTo(aNum);
+    });
   }
 
   void _saveSelection() async {
