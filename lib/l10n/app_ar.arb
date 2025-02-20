@@ -26,5 +26,7 @@
   "updateProgressFailed": "فشل في تحديث التقدم:",
   "clearDataFailed": "فشل في مسح البيانات:",
   "suraRemoved": "تمت إزالتها",
-  "undo": "تراجع"
+  "undo": "تراجع",
+  "select_at_least_one_sura": "يرجى اختيار سورة واحدة على الأقل قبل الحفظ."
+
 }

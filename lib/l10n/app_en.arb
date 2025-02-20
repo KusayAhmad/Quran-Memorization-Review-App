@@ -26,5 +26,6 @@
   "updateProgressFailed": "Failed to update progress:",
   "clearDataFailed": "Failed to clear data:",
   "suraRemoved": "Removed",
-  "undo": "Undo"
-  }
+  "undo": "Undo",
+  "select_at_least_one_sura": "Please select at least one surah before saving."
+}

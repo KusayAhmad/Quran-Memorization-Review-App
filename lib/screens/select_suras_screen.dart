@@ -94,6 +94,15 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   void _saveSelection() async {
+    if (_selectedIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(AppLocalizations.of(context)!.select_at_least_one_sura)),
+      );
+      return;
+    }
+
     for (var sura in _allSuras) {
       if (_selectedIds.contains(sura.id)) {
         await _dbHelper.addSelectedSura(sura);
@@ -101,6 +110,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         await _dbHelper.removeSelectedSura(sura.id);
       }
     }
+
     if (mounted) {
       Navigator.pop(context, true);
     }
