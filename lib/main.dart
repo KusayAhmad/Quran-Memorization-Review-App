@@ -71,6 +71,10 @@ class _MyAppState extends State<MyApp> {
         fontFamily: 'Uthmanic',
         popupMenuTheme: PopupMenuThemeData(
           color: _isDarkMode ? Colors.grey.shade200 : Colors.pink.shade200,
+          textStyle: const TextStyle(
+            color: Colors.black,
+            fontSize: 16,
+          ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),

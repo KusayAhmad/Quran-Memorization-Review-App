@@ -151,7 +151,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         backgroundColor:
-                        const Color.fromARGB(255, 226, 120, 112),
+                            const Color.fromARGB(255, 226, 120, 112),
                         content: Text(
                             AppLocalizations.of(context)!.invalidInput,
                             style: TextStyle(
@@ -342,13 +342,19 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               }
             },
             itemBuilder: (BuildContext context) => [
-              PopupMenuItem<String>(
+              PopupMenuItem(
                 value: 'edit',
-                child: Text(AppLocalizations.of(context)!.edit),
+                child: Text(
+                  AppLocalizations.of(context)!.edit,
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
-              PopupMenuItem<String>(
+              PopupMenuItem(
                 value: 'delete',
-                child: Text(AppLocalizations.of(context)!.delete),
+                child: Text(
+                  AppLocalizations.of(context)!.delete,
+                  style: TextStyle(color: Colors.black),
+                ),
               ),
             ],
           ),

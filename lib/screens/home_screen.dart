@@ -117,21 +117,23 @@ class HomeScreenState extends State<HomeScreen> {
             child: CheckboxListTile(
               contentPadding:
                   const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+              checkColor: widget.isDarkMode ? Colors.black : Colors.white,
               tileColor:
                   widget.isDarkMode ? Colors.grey.shade800 : Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8.0),
               ),
               title: Text(
-                '${sura.name} (${percentage.toStringAsFixed(1)}%)',
+                '${sura.name} ',
                 style: TextStyle(
-                  color: widget.isDarkMode ? Colors.white : Colors.white70,
+                  color: widget.isDarkMode ? Colors.white : Colors.black,
                   fontSize: 18.0,
                 ),
               ),
               subtitle: Text(
-                '${sura.pages} ${AppLocalizations.of(context)!.pages}',
+                '${sura.pages} ${AppLocalizations.of(context)!.pages} (${percentage.toStringAsFixed(1)}%)',
                 style: TextStyle(
+                  fontWeight: FontWeight.bold,
                   color: widget.isDarkMode ? Colors.white70 : Colors.black87,
                   fontSize: 14.0,
                 ),
@@ -243,16 +245,14 @@ class HomeScreenState extends State<HomeScreen> {
                 value: Locale('en'),
                 child: Text(
                   AppLocalizations.of(context)!.languageEnglish,
-                  style: TextStyle(
-                      color: widget.isDarkMode ? Colors.white : Colors.black),
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
               PopupMenuItem(
                 value: Locale('ar'),
                 child: Text(
                   AppLocalizations.of(context)!.languageArabic,
-                  style: TextStyle(
-                      color: widget.isDarkMode ? Colors.white : Colors.black),
+                  style: TextStyle(color: Colors.black),
                 ),
               ),
             ],
