@@ -304,8 +304,14 @@ class HomeScreenState extends State<HomeScreen> {
                   LinearPercentIndicator(
                     lineHeight: 30.0,
                     animation: true,
+                    animateFromLastPercent: true,
+                    animationDuration: 500,
+                    restartAnimation: false,
+                    barRadius: const Radius.circular(10),
                     percent: _progress,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: widget.isDarkMode
+                        ? Color.fromARGB(255, 191, 191, 191)
+                        : Colors.grey[300],
                     linearGradient: LinearGradient(
                       colors: [primaryColor, secondaryColor],
                     ),
