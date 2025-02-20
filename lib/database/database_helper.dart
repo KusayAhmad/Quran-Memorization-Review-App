@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final _databaseName = "QuranReview.db";
-  static final _databaseVersion = 1;
+  static final _databaseVersion = 2;
 
   static final tableSuras = 'suras';
   static final columnId = 'id';
