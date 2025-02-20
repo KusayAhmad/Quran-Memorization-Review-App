@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final _databaseName = "QuranReview.db";
-  static final _databaseVersion = 2;
+  static final _databaseVersion = 3;
 
   static final tableSuras = 'suras';
   static final columnId = 'id';
@@ -40,7 +40,7 @@ class DatabaseHelper {
       CREATE TABLE $tableSuras (
         $columnId INTEGER PRIMARY KEY,
         $columnName TEXT NOT NULL,
-        $columnPages INTEGER NOT NULL
+        $columnPages REAL NOT NULL
       )
     ''');
 
@@ -55,7 +55,7 @@ class DatabaseHelper {
   CREATE TABLE selected_suras (
     id INTEGER ,
     name TEXT NOT NULL,
-    pages INTEGER NOT NULL,
+    pages REAL NOT NULL,
     reviewed BOOLEAN DEFAULT 0,
     FOREIGN KEY (id) REFERENCES suras(id)
   )
@@ -64,7 +64,7 @@ class DatabaseHelper {
     await db.execute('''
   CREATE TABLE IF NOT EXISTS daily_progress (
     date TEXT PRIMARY KEY,
-    completed_pages INTEGER DEFAULT 0
+    completed_pages REAL DEFAULT 0
   )
 ''');
 

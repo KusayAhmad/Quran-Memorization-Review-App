@@ -50,11 +50,11 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _calculateProgress() {
-    final total = _suras.fold(0, (sum, s) => sum + s.pages);
+    final total = _suras.fold(0.0, (sum, s) => sum + s.pages);
     final completed =
-        _suras.where((s) => s.isCompleted).fold(0, (sum, s) => sum + s.pages);
+        _suras.where((s) => s.isCompleted).fold(0.0, (sum, s) => sum + s.pages);
     setState(() {
-      _progress = total > 0 ? completed / total : 0.0;
+      _progress = total > 0.0 ? completed / total : 0.0;
     });
   }
 
@@ -77,8 +77,8 @@ class HomeScreenState extends State<HomeScreen> {
       itemBuilder: (context, index) {
         final sura = _suras[index];
         final percentage = (_suras.isNotEmpty && _suras[0].pages > 0)
-            ? (sura.pages / _suras.fold(0, (sum, s) => sum + s.pages)) * 100
-            : 0;
+            ? (sura.pages / _suras.fold(0.0, (sum, s) => sum + s.pages)) * 100
+            : 0.0;
 
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -111,7 +111,15 @@ class HomeScreenState extends State<HomeScreen> {
                 );
               }
               await _updateProgress(removedSura);
-              if (_progress >= 1.0) _showCompletionDialog(primaryColor);
+              if (_progress >= 1.0) {
+                double reviewedPages = double.parse(
+                  _suras
+                      .where((s) => s.isCompleted)
+                      .fold(0.0, (sum, s) => sum + s.pages)
+                      .toStringAsFixed(2),
+                );
+                _showCompletionDialog(primaryColor, reviewedPages);
+              }
             },
             background: Container(color: Colors.redAccent),
             child: CheckboxListTile(
@@ -144,7 +152,14 @@ class HomeScreenState extends State<HomeScreen> {
                   sura.isCompleted = value ?? false;
                 });
                 await _updateProgress(sura);
-                if (_progress >= 1.0) _showCompletionDialog(primaryColor);
+                if (_progress >= 1.0) {
+                  double reviewedPages = _suras
+                      .where((s) => s.isCompleted)
+                      .fold(0.0, (sum, s) => sum + s.pages);
+
+                  String formattedPages = reviewedPages.toStringAsFixed(2);
+                  _showCompletionDialog(primaryColor, formattedPages);
+                }
               },
             ),
           ),
@@ -153,7 +168,7 @@ class HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void _showCompletionDialog(Color primaryColor) {
+  void _showCompletionDialog(Color primaryColor, formattedPages) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -168,7 +183,8 @@ class HomeScreenState extends State<HomeScreen> {
           ),
         ),
         content: Text(
-          AppLocalizations.of(context)!.reviewCompleted,
+          AppLocalizations.of(context)!
+              .reviewCompletedWithPages(formattedPages),
           textAlign: TextAlign.center,
           style: TextStyle(
             color: widget.isDarkMode ? Colors.white : Colors.black,

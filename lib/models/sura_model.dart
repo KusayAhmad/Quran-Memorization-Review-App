@@ -1,7 +1,7 @@
 class Sura {
   final int id;
   final String name;
-  final int pages;
+  final double pages;
   bool isCompleted;
 
   Sura({

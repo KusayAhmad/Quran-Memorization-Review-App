@@ -46,7 +46,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           .map((s) => Sura(
                 id: s['id'] as int,
                 name: s['name'] as String,
-                pages: s['pages'] as int,
+                pages: s['pages'] as double,
               ))
           .toList();
 
@@ -118,7 +118,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   void _showAddSuraDialog(BuildContext context) {
     String suraName = '';
-    int suraPages = 0;
+    double suraPages = 0.0;
 
     showDialog(
       context: context,
@@ -138,9 +138,9 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               TextField(
                 decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.numberOfPages),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 onChanged: (value) {
-                  suraPages = int.tryParse(value) ?? 0;
+                  suraPages = double.tryParse(value) ?? 0.0;
                 },
               ),
             ],
@@ -178,7 +178,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     );
   }
 
-  Future<void> _addSura(String name, int pages) async {
+  Future<void> _addSura(String name, double pages) async {
     final db = await _dbHelper.database;
     final List<Map<String, dynamic>> result =
         await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
@@ -194,7 +194,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   void _showEditSuraDialog(BuildContext context, Sura sura) {
     String suraName = sura.name;
-    int suraPages = sura.pages;
+    double suraPages = sura.pages;
 
     showDialog(
       context: context,
@@ -215,10 +215,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               TextField(
                 decoration: InputDecoration(
                     labelText: AppLocalizations.of(context)!.numberOfPages),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.numberWithOptions(decimal: true),
                 controller: TextEditingController(text: sura.pages.toString()),
                 onChanged: (value) {
-                  suraPages = int.tryParse(value) ?? 0;
+                  suraPages = double.tryParse(value) ?? 0.0;
                 },
               ),
             ],
