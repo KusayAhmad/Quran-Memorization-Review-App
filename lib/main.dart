@@ -18,27 +18,20 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   Locale _locale = const Locale('en');
-  late bool _isDarkMode;
+  bool _isDarkMode = false;
 
   @override
   void initState() {
     super.initState();
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    _isDarkMode = MediaQuery.of(context).platformBrightness == Brightness.dark;
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadLocale();
     });
   }
 
   Future<void> _loadLocale() async {
-    Locale deviceLocale = Localizations.localeOf(context);
-
     String? storedLanguageCode = await DatabaseHelper().getSelectedLanguage();
+    Locale deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+
     if (storedLanguageCode != null) {
       setLocale(Locale(storedLanguageCode));
     } else {
@@ -47,6 +40,12 @@ class _MyAppState extends State<MyApp> {
               ? deviceLocale
               : const Locale('ar'));
     }
+
+    setState(() {
+      _isDarkMode =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness ==
+              Brightness.dark;
+    });
   }
 
   void setLocale(Locale value) {
@@ -55,14 +54,27 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
+  void toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      locale: _locale,
       title: 'مراجعة الورد اليومي',
       theme: ThemeData(
         brightness: _isDarkMode ? Brightness.dark : Brightness.light,
         primarySwatch: Colors.green,
         fontFamily: 'Uthmanic',
+        popupMenuTheme: PopupMenuThemeData(
+          color: _isDarkMode ? Colors.grey.shade200 : Colors.pink.shade200,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
       ),
       localizationsDelegates: const [
         AppLocalizations.delegate,
@@ -74,8 +86,10 @@ class _MyAppState extends State<MyApp> {
         Locale('en'),
         Locale('ar'),
       ],
-      locale: _locale,
-      home: HomeScreen(setLocale: setLocale),
+      home: HomeScreen(
+          setLocale: setLocale,
+          isDarkMode: _isDarkMode,
+          toggleTheme: toggleTheme),
     );
   }
 }

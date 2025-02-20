@@ -6,8 +6,10 @@ import '../models/sura_model.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
+  final bool isDarkMode;
 
-  const SelectSurasScreen({super.key, required this.setLocale});
+  const SelectSurasScreen(
+      {super.key, required this.setLocale, required this.isDarkMode});
 
   @override
   SelectSurasScreenState createState() => SelectSurasScreenState();
@@ -20,7 +22,6 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   List<int> _selectedIds = [];
   String _searchText = '';
   String _sortMode = 'asc';
-  bool _isDarkMode = false;
 
   @override
   void initState() {
@@ -247,13 +248,15 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   @override
   Widget build(BuildContext context) {
     final Color primaryColor =
-        _isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
+        widget.isDarkMode ? Colors.grey.shade900 : Colors.pink.shade300;
     final Color backgroundColor =
-        _isDarkMode ? Colors.black : Colors.pink.shade50;
+        widget.isDarkMode ? Colors.black : Colors.pink.shade50;
+    final Color textColor = widget.isDarkMode ? Colors.white : Colors.black;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.selectSuras),
+        title: Text(AppLocalizations.of(context)!.selectSuras,
+            style: TextStyle(color: textColor)),
         backgroundColor: primaryColor,
         actions: [
           PopupMenuButton<String>(
@@ -287,8 +290,14 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               child: TextField(
                 decoration: InputDecoration(
                   labelText: AppLocalizations.of(context)!.searchSuras,
-                  prefixIcon: Icon(Icons.search),
+                  prefixIcon: Icon(Icons.search, color: textColor),
+                  labelStyle: TextStyle(color: textColor),
+                  enabledBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor)),
+                  focusedBorder: UnderlineInputBorder(
+                      borderSide: BorderSide(color: textColor)),
                 ),
+                style: TextStyle(color: textColor),
                 onChanged: _filterSuras,
               ),
             ),
@@ -298,6 +307,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _saveSelection,
+        backgroundColor: primaryColor,
         child: Text(AppLocalizations.of(context)!.save),
       ),
     );
