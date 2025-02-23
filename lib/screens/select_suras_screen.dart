@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-
-import '../database/database_helper.dart';
-import '../models/sura_model.dart';
+import 'package:quran_review_app/database/database_helper.dart';
+import 'package:quran_review_app/models/sura_model.dart';
+import 'package:quran_review_app/utils/sura_dialogs.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -40,16 +40,11 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   void _loadAllSuras() async {
     final db = await _dbHelper.database;
-    final suras = await db.query(DatabaseHelper.tableSuras);
+    final List<Map<String, dynamic>> maps =
+        await db.query(DatabaseHelper.tableSuras);
     setState(() {
-      _allSuras = suras
-          .map((s) => Sura(
-                id: s['id'] as int,
-                name: s['name'] as String,
-                pages: s['pages'] as double,
-              ))
-          .toList();
-
+      _allSuras =
+          maps.map((map) => Sura.fromMap(map)).toList(); // استخدام fromMap هنا
       _filteredSuras = List.from(_allSuras);
       _sortFilteredSuras();
     });
@@ -103,157 +98,12 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       return;
     }
 
-    for (var sura in _allSuras) {
-      if (_selectedIds.contains(sura.id)) {
-        await _dbHelper.addSelectedSura(sura);
-      } else {
-        await _dbHelper.removeSelectedSura(sura.id);
-      }
-    }
+    await _dbHelper
+        .updateSelectedSuras(_selectedIds); // استخدام الدالة المركزية
 
     if (mounted) {
       Navigator.pop(context, true);
     }
-  }
-
-  void _showAddSuraDialog(BuildContext context) {
-    String suraName = '';
-    double suraPages = 0.0;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.addNewSura),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.suraName),
-                onChanged: (value) {
-                  suraName = value;
-                },
-              ),
-              TextField(
-                decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.numberOfPages),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                onChanged: (value) {
-                  suraPages = double.tryParse(value) ?? 0.0;
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(AppLocalizations.of(context)!.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                if (suraName.isNotEmpty && suraPages > 0) {
-                  await _addSura(suraName, suraPages);
-                  if (context.mounted) {
-                    Navigator.pop(context);
-                  }
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        backgroundColor:
-                            const Color.fromARGB(255, 226, 120, 112),
-                        content: Text(
-                            AppLocalizations.of(context)!.invalidInput,
-                            style: TextStyle(
-                                color: const Color.fromARGB(255, 0, 0, 0),
-                                fontWeight: FontWeight.bold))),
-                  );
-                }
-              },
-              child: Text(AppLocalizations.of(context)!.add),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _addSura(String name, double pages) async {
-    final db = await _dbHelper.database;
-    final List<Map<String, dynamic>> result =
-        await db.rawQuery('SELECT MAX(id) FROM ${DatabaseHelper.tableSuras}');
-    final int highestId = (result.isNotEmpty && result[0]['MAX(id)'] != null)
-        ? result[0]['MAX(id)'] as int
-        : 0;
-    final newId = highestId + 1;
-
-    final newSura = Sura(id: newId, name: name, pages: pages);
-    await _dbHelper.insertSura(newSura);
-    _loadAllSuras();
-  }
-
-  void _showEditSuraDialog(BuildContext context, Sura sura) {
-    String suraName = sura.name;
-    double suraPages = sura.pages;
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text(AppLocalizations.of(context)!.edit),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.suraName),
-                controller: TextEditingController(text: sura.name),
-                onChanged: (value) {
-                  suraName = value;
-                },
-              ),
-              TextField(
-                decoration: InputDecoration(
-                    labelText: AppLocalizations.of(context)!.numberOfPages),
-                keyboardType: TextInputType.numberWithOptions(decimal: true),
-                controller: TextEditingController(text: sura.pages.toString()),
-                onChanged: (value) {
-                  suraPages = double.tryParse(value) ?? 0.0;
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              child: Text(AppLocalizations.of(context)!.cancel),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text(AppLocalizations.of(context)!.update),
-              onPressed: () {
-                if (suraName.isNotEmpty && suraPages > 0) {
-                  _updateSura(
-                      Sura(id: sura.id, name: suraName, pages: suraPages));
-                  Navigator.of(context).pop();
-                }
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _updateSura(Sura sura) async {
-    await _dbHelper.updateSura(sura);
-    _loadAllSuras();
-  }
-
-  Future<void> _deleteSura(Sura sura) async {
-    await _dbHelper.deleteSura(sura.id);
-    _loadAllSuras();
   }
 
   @override
@@ -287,7 +137,11 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () {
-              _showAddSuraDialog(context);
+              showAddSuraDialog(
+                context,
+                _loadAllSuras, // Callback لإعادة تحميل البيانات بعد الإضافة
+                AppLocalizations.of(context)!, // الترجمة
+              );
             },
           ),
         ],
@@ -346,9 +200,23 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
           secondary: PopupMenuButton<String>(
             onSelected: (String value) {
               if (value == 'edit') {
-                _showEditSuraDialog(context, sura);
+                showEditSuraDialog(
+                  context, // المعامل الأول: BuildContext
+                  sura, // المعامل الثاني: Sura
+                  (updatedSura) async {
+                    await _dbHelper.updateSura(
+                        updatedSura); // تحديث السورة في قاعدة البيانات
+                    _loadAllSuras(); // إعادة تحميل البيانات
+                  }, // المعامل الثالث: Function(Sura)
+                  AppLocalizations.of(
+                      context)!, // المعامل الرابع: AppLocalizations
+                );
               } else if (value == 'delete') {
-                _deleteSura(sura);
+                _dbHelper.deleteSura(sura.id);
+                setState(() {
+                  _filteredSuras
+                      .removeWhere((s) => s.id == sura.id); // تحديث الواجهة
+                });
               }
             },
             itemBuilder: (BuildContext context) => [

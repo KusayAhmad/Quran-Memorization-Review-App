@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:percent_indicator/percent_indicator.dart';
+import 'package:quran_review_app/database/database_helper.dart';
+import 'package:quran_review_app/models/sura_model.dart';
 
-import '../database/database_helper.dart';
-import '../models/sura_model.dart';
 import 'select_suras_screen.dart';
 
 class HomeScreen extends StatefulWidget {

@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final _databaseName = "QuranReview.db";
-  static final _databaseVersion = 3;
+  static final _databaseVersion = 4;
 
   static final tableSuras = 'suras';
   static final columnId = 'id';
@@ -40,7 +40,8 @@ class DatabaseHelper {
       CREATE TABLE $tableSuras (
         $columnId INTEGER PRIMARY KEY,
         $columnName TEXT NOT NULL,
-        $columnPages REAL NOT NULL
+        $columnPages REAL NOT NULL,
+        reviewed BOOLEAN DEFAULT 0
       )
     ''');
 
@@ -76,11 +77,13 @@ class DatabaseHelper {
     ''');
   }
 
-  Future<int> insertSura(Sura sura) async {
+  Future<int> insertSura({required String name, required double pages}) async {
     final db = await database;
+    final int newId = await generateNewSuraId();
+    final Sura newSura = Sura(id: newId, name: name, pages: pages);
     return await db.insert(
       tableSuras,
-      sura.toMap(),
+      newSura.toMap(),
       conflictAlgorithm: ConflictAlgorithm.replace,
     );
   }
@@ -229,5 +232,39 @@ class DatabaseHelper {
 
   Future<String?> getSelectedLanguage() async {
     return await getPreference('selectedLanguage');
+  }
+
+  // إضافة دالة لإنشاء ID تلقائيًا
+  Future<int> generateNewSuraId() async {
+    final db = await database;
+    final result = await db.rawQuery('SELECT MAX(id) FROM $tableSuras');
+    return (result.isNotEmpty && result[0]['MAX(id)'] != null)
+        ? (result[0]['MAX(id)'] as int) + 1
+        : 1;
+  }
+
+// إضافة دالة لتحميل جميع السور
+  Future<List<Sura>> getAllSuras() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(tableSuras);
+    return maps.map((map) => Sura.fromMap(map)).toList();
+  }
+
+// إضافة دالة لتحديث السور المختارة
+  Future<void> updateSelectedSuras(List<int> selectedIds) async {
+    final db = await database;
+    await db.delete('selected_suras');
+    for (int id in selectedIds) {
+      final sura =
+          await db.query(tableSuras, where: '$columnId = ?', whereArgs: [id]);
+      if (sura.isNotEmpty) {
+        await db.insert('selected_suras', {
+          'id': id,
+          'name': sura[0][columnName],
+          'pages': sura[0][columnPages],
+          'reviewed': 0,
+        });
+      }
+    }
   }
 }

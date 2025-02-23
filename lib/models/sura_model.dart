@@ -16,6 +16,17 @@ class Sura {
       'id': id,
       'name': name,
       'pages': pages,
+      'reviewed': isCompleted ? 1 : 0, // تحويل bool إلى int
     };
+  }
+
+  // إضافة دالة fromMap (اختياري، لكنها مفيدة)
+  factory Sura.fromMap(Map<String, dynamic> map) {
+    return Sura(
+      id: map['id'] as int,
+      name: map['name'] as String,
+      pages: map['pages'] as double,
+      isCompleted: map['reviewed'] == 1, // تحويل int إلى bool
+    );
   }
 }
