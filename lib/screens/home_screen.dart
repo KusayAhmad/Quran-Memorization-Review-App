@@ -66,6 +66,9 @@ class HomeScreenState extends State<HomeScreen> {
   void _checkCompletion(Color primaryColor) {
     if (_progress >= 1.0) {
       _showCompletionDialog(primaryColor, _getFormattedReviewedPages());
+
+      // ✅ تحديث الإحصائيات عند الانتهاء من جميع السور
+      _dbHelper.updateSuraStatsForAll(_suras.map((s) => s.id).toList());
     }
   }
 
@@ -73,6 +76,11 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
       _calculateProgress();
+
+      // تحديث الإحصائيات فقط عند اكتمال جميع السور
+      // if (_progress >= 1.0) {
+      //   await _dbHelper.updateSuraStatsForAll(_suras.map((s) => s.id).toList());
+      // }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -159,10 +167,6 @@ class HomeScreenState extends State<HomeScreen> {
               onChanged: (value) async {
                 setState(() => sura.isCompleted = value ?? false);
                 await _updateProgress(sura);
-
-                if (value == true) {
-                  await _dbHelper.updateSuraStats(sura.id); // حفظ الإحصائيات
-                }
 
                 _checkCompletion(primaryColor);
               },

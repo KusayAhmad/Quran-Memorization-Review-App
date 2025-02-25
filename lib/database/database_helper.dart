@@ -191,9 +191,9 @@ class DatabaseHelper {
       whereArgs: [suraId],
     );
 
-    if (isCompleted) {
-      await updateSuraStats(suraId); // تحديث الإحصائيات المنفصلة
-    }
+    // if (isCompleted) {
+    //   await updateSuraStats(suraId); // تحديث الإحصائيات المنفصلة
+    // }
   }
 
   Future<Map<String, dynamic>> getSuraStats(int suraId) async {
@@ -311,9 +311,39 @@ class DatabaseHelper {
           'name': sura[0][columnName],
           'pages': sura[0][columnPages],
           'reviewed': 0,
+          // 'reviewed': resetReviewed ? 0 : sura[0]['reviewed'], // ✅ التحكم في إعادة التعيين
           'last_reviewed_date': null,
           'total_reviewed_times': 0,
         });
+      }
+    }
+  }
+
+  Future<void> updateSuraStatsForAll(List<int> suraIds) async {
+    final db = await database;
+    final currentDate = DateTime.now().toIso8601String();
+
+    for (int suraId in suraIds) {
+      // تحقق مما إذا كانت السورة قد تمت مراجعتها مسبقًا اليوم
+      final existing = await db.query(
+        tableStats,
+        where: 'sura_id = ? AND last_reviewed_date = ?',
+        whereArgs: [suraId, currentDate],
+      );
+
+      if (existing.isEmpty) {
+        await db.rawInsert('''
+      INSERT INTO $tableStats (
+        sura_id, 
+        last_reviewed_date, 
+        total_reviewed_times
+      ) 
+      VALUES (?, ?, 1)
+      ON CONFLICT(sura_id) 
+      DO UPDATE SET
+        last_reviewed_date = excluded.last_reviewed_date,
+        total_reviewed_times = total_reviewed_times + 1
+      ''', [suraId, currentDate]);
       }
     }
   }
