@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 import 'package:quran_review_app/database/database_helper.dart';
 import 'package:quran_review_app/models/sura_model.dart';
 import 'package:quran_review_app/utils/sura_dialogs.dart';
@@ -43,8 +44,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
     final List<Map<String, dynamic>> maps =
         await db.query(DatabaseHelper.tableSuras);
     setState(() {
-      _allSuras =
-          maps.map((map) => Sura.fromMap(map)).toList(); // استخدام fromMap هنا
+      _allSuras = maps.map((map) => Sura.fromMap(map)).toList();
       _filteredSuras = List.from(_allSuras);
       _sortFilteredSuras();
     });
@@ -140,7 +140,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               showAddSuraDialog(
                 context,
                 _loadAllSuras, // Callback لإعادة تحميل البيانات بعد الإضافة
-                AppLocalizations.of(context)!, // الترجمة
+                AppLocalizations.of(context)!,
               );
             },
           ),
@@ -185,8 +185,21 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         final sura = _filteredSuras[index];
         return CheckboxListTile(
           title: Text(sura.name),
-          subtitle:
-              Text('${sura.pages} ${AppLocalizations.of(context)!.pages}'),
+          subtitle: FutureBuilder<Map<String, dynamic>>(
+            future: _dbHelper.getSuraStats(sura.id),
+            builder: (context, snapshot) {
+              final stats = snapshot.data ?? {};
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (stats['last_reviewed'] != null)
+                    Text(
+                        'آخر مراجعة: ${DateFormat('yyyy-MM-dd').format(stats['last_reviewed'])}'),
+                  Text('عدد المراجعات: ${stats['total_times']}')
+                ],
+              );
+            },
+          ),
           value: _selectedIds.contains(sura.id),
           onChanged: (value) {
             setState(() {
@@ -201,15 +214,14 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
             onSelected: (String value) {
               if (value == 'edit') {
                 showEditSuraDialog(
-                  context, // المعامل الأول: BuildContext
-                  sura, // المعامل الثاني: Sura
+                  context,
+                  sura,
                   (updatedSura) async {
                     await _dbHelper.updateSura(
                         updatedSura); // تحديث السورة في قاعدة البيانات
                     _loadAllSuras(); // إعادة تحميل البيانات
-                  }, // المعامل الثالث: Function(Sura)
-                  AppLocalizations.of(
-                      context)!, // المعامل الرابع: AppLocalizations
+                  },
+                  AppLocalizations.of(context)!,
                 );
               } else if (value == 'delete') {
                 _dbHelper.deleteSura(sura.id);

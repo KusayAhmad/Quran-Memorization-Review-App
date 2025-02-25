@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final _databaseName = "QuranReview.db";
-  static final _databaseVersion = 4;
+  static final _databaseVersion = 5;
 
   static final tableSuras = 'suras';
   static final columnId = 'id';
@@ -19,6 +19,7 @@ class DatabaseHelper {
   static final columnPreferenceName = 'name';
   static final columnPreferenceValue = 'value';
   static Database? _database;
+  static final tableStats = 'sura_stats';
 
   Future<Database> get database async {
     if (_database != null) return _database!;
@@ -37,13 +38,15 @@ class DatabaseHelper {
 
   Future _onCreate(Database db, int version) async {
     await db.execute('''
-      CREATE TABLE $tableSuras (
-        $columnId INTEGER PRIMARY KEY,
-        $columnName TEXT NOT NULL,
-        $columnPages REAL NOT NULL,
-        reviewed BOOLEAN DEFAULT 0
-      )
-    ''');
+    CREATE TABLE $tableSuras (
+      $columnId INTEGER PRIMARY KEY,
+      $columnName TEXT NOT NULL,
+      $columnPages REAL NOT NULL,
+      reviewed BOOLEAN DEFAULT 0,
+      last_reviewed_date TEXT,
+      total_reviewed_times INTEGER DEFAULT 0
+    )
+  ''');
 
     await db.execute('''
       CREATE TABLE $tableProgress (
@@ -54,11 +57,12 @@ class DatabaseHelper {
 
     await db.execute('''
   CREATE TABLE selected_suras (
-    id INTEGER ,
+    id INTEGER,
     name TEXT NOT NULL,
     pages REAL NOT NULL,
     reviewed BOOLEAN DEFAULT 0,
-    FOREIGN KEY (id) REFERENCES suras(id)
+    last_reviewed_date TEXT,
+    total_reviewed_times INTEGER DEFAULT 0
   )
 ''');
 
@@ -75,6 +79,15 @@ class DatabaseHelper {
         $columnPreferenceValue TEXT NOT NULL
       )
     ''');
+
+    await db.execute('''
+  CREATE TABLE $tableStats (
+    sura_id INTEGER PRIMARY KEY,
+    last_reviewed_date TEXT,
+    total_reviewed_times INTEGER DEFAULT 0,
+    FOREIGN KEY (sura_id) REFERENCES $tableSuras(id)
+  )
+''');
   }
 
   Future<int> insertSura({required String name, required double pages}) async {
@@ -135,7 +148,8 @@ class DatabaseHelper {
           'id': sura.id,
           'name': sura.name,
           'pages': sura.pages,
-          'reviewed': 0,
+          'reviewed':
+              sura.isCompleted ? 1 : 0, // استخدام القيمة الفعلية من السورة
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -168,18 +182,53 @@ class DatabaseHelper {
 
   Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
     final db = await database;
-    int result = await db.update(
+
+    // تحديث حالة المراجعة فقط
+    await db.update(
       'selected_suras',
       {'reviewed': isCompleted ? 1 : 0},
       where: 'id = ?',
       whereArgs: [suraId],
     );
 
-    if (result > 0) {
-      print('Sura with ID $suraId updated successfully');
-    } else {
-      print('Failed to update sura with ID $suraId');
+    if (isCompleted) {
+      await updateSuraStats(suraId); // تحديث الإحصائيات المنفصلة
     }
+  }
+
+  Future<Map<String, dynamic>> getSuraStats(int suraId) async {
+    final db = await database;
+    final stats = await db.query(
+      tableStats,
+      where: 'sura_id = ?',
+      whereArgs: [suraId],
+    );
+
+    return stats.isNotEmpty
+        ? {
+            'last_reviewed':
+                DateTime.parse(stats[0]['last_reviewed_date'] as String),
+            'total_times': stats[0]['total_reviewed_times'] as int
+          }
+        : {'last_reviewed': null, 'total_times': 0};
+  }
+
+  Future<void> updateSuraStats(int suraId) async {
+    final db = await database;
+    final currentDate = DateTime.now().toIso8601String();
+
+    await db.rawInsert('''
+    INSERT INTO $tableStats (
+      sura_id, 
+      last_reviewed_date, 
+      total_reviewed_times
+    ) 
+    VALUES (?, ?, 1)
+    ON CONFLICT(sura_id) 
+    DO UPDATE SET
+      last_reviewed_date = excluded.last_reviewed_date,
+      total_reviewed_times = total_reviewed_times + 1
+  ''', [suraId, currentDate]);
   }
 
   Future<List<int>> getCompletedSuras(DateTime date) async {
@@ -234,7 +283,6 @@ class DatabaseHelper {
     return await getPreference('selectedLanguage');
   }
 
-  // إضافة دالة لإنشاء ID تلقائيًا
   Future<int> generateNewSuraId() async {
     final db = await database;
     final result = await db.rawQuery('SELECT MAX(id) FROM $tableSuras');
@@ -263,6 +311,8 @@ class DatabaseHelper {
           'name': sura[0][columnName],
           'pages': sura[0][columnPages],
           'reviewed': 0,
+          'last_reviewed_date': null,
+          'total_reviewed_times': 0,
         });
       }
     }

@@ -3,8 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:quran_review_app/database/database_helper.dart';
 import 'package:quran_review_app/models/sura_model.dart';
-
-import 'select_suras_screen.dart';
+import 'package:quran_review_app/screens/select_suras_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -142,20 +141,29 @@ class HomeScreenState extends State<HomeScreen> {
                   fontSize: 18.0,
                 ),
               ),
-              subtitle: Text(
-                '${sura.pages} ${AppLocalizations.of(context)!.pages} (${percentage.toStringAsFixed(1)}%)',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: widget.isDarkMode ? Colors.white70 : Colors.black87,
-                  fontSize: 14.0,
-                ),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${sura.pages} ${AppLocalizations.of(context)!.pages} (${percentage.toStringAsFixed(1)}%)',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color:
+                          widget.isDarkMode ? Colors.white70 : Colors.black87,
+                      fontSize: 14.0,
+                    ),
+                  ),
+                ],
               ),
               value: sura.isCompleted,
               onChanged: (value) async {
-                setState(() {
-                  sura.isCompleted = value ?? false;
-                });
+                setState(() => sura.isCompleted = value ?? false);
                 await _updateProgress(sura);
+
+                if (value == true) {
+                  await _dbHelper.updateSuraStats(sura.id); // حفظ الإحصائيات
+                }
+
                 _checkCompletion(primaryColor);
               },
             ),
@@ -213,11 +221,11 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final db = await _dbHelper.database;
       await db.delete('selected_suras');
-      _loadData();
+      _loadData(); // إعادة تحميل البيانات لتحديث الواجهة
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to clear data: $e')),
+          SnackBar(content: Text('Failed to reset suras: $e')),
         );
       }
     }
@@ -314,6 +322,13 @@ class HomeScreenState extends State<HomeScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
+                  Text(
+                    'الصفحات المراجعة: ${_getFormattedReviewedPages()}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      color: widget.isDarkMode ? Colors.white : Colors.black,
+                    ),
+                  ),
                   LinearPercentIndicator(
                     lineHeight: 30.0,
                     animation: true,
