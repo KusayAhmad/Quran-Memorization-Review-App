@@ -20,7 +20,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class HomeScreenState extends State<HomeScreen> {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Sura> _suras = [];
   bool _isLoading = true;
   double _progress = 0.0;
@@ -63,12 +63,11 @@ class HomeScreenState extends State<HomeScreen> {
     return reviewedPages.toStringAsFixed(2);
   }
 
-  void _checkCompletion(Color primaryColor) {
+  void _checkCompletion(Color primaryColor) async {
     if (_progress >= 1.0) {
       _showCompletionDialog(primaryColor, _getFormattedReviewedPages());
 
-      // ✅ تحديث الإحصائيات عند الانتهاء من جميع السور
-      _dbHelper.updateSuraStatsForAll(_suras.map((s) => s.id).toList());
+      await _dbHelper.updateSuraStatsForAll(_suras.map((s) => s.id).toList());
     }
   }
 
@@ -76,11 +75,6 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       await _dbHelper.updateSuraReviewedStatus(sura.id, sura.isCompleted);
       _calculateProgress();
-
-      // تحديث الإحصائيات فقط عند اكتمال جميع السور
-      // if (_progress >= 1.0) {
-      //   await _dbHelper.updateSuraStatsForAll(_suras.map((s) => s.id).toList());
-      // }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -91,14 +85,13 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildListView(Color primaryColor) {
+    final totalPages = _suras.fold(0.0, (sum, s) => sum + s.pages);
     return ListView.builder(
       itemCount: _suras.length,
       itemBuilder: (context, index) {
         final sura = _suras[index];
-        final percentage = (_suras.isNotEmpty && _suras[0].pages > 0)
-            ? (sura.pages / _suras.fold(0.0, (sum, s) => sum + s.pages)) * 100
-            : 0.0;
-
+        final percentage =
+            totalPages > 0 ? (sura.pages / totalPages) * 100 : 0.0;
         return Padding(
           padding: const EdgeInsets.symmetric(vertical: 8.0),
           child: Dismissible(
@@ -106,7 +99,7 @@ class HomeScreenState extends State<HomeScreen> {
             direction: DismissDirection.horizontal,
             onDismissed: (direction) async {
               final removedSura = _suras[index];
-              await _dbHelper.removeSelectedSura(removedSura.id);
+              await DatabaseHelper.instance.removeSelectedSura(removedSura.id);
               setState(() {
                 _suras.removeAt(index);
               });
@@ -119,7 +112,8 @@ class HomeScreenState extends State<HomeScreen> {
                     action: SnackBarAction(
                       label: AppLocalizations.of(context)!.undo,
                       onPressed: () async {
-                        await _dbHelper.addSelectedSura(removedSura);
+                        await DatabaseHelper.instance
+                            .addSelectedSura(removedSura);
                         setState(() {
                           _suras.insert(index, removedSura);
                         });
@@ -149,25 +143,18 @@ class HomeScreenState extends State<HomeScreen> {
                   fontSize: 18.0,
                 ),
               ),
-              subtitle: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${sura.pages} ${AppLocalizations.of(context)!.pages} (${percentage.toStringAsFixed(1)}%)',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color:
-                          widget.isDarkMode ? Colors.white70 : Colors.black87,
-                      fontSize: 14.0,
-                    ),
-                  ),
-                ],
+              subtitle: Text(
+                '${sura.pages} ${AppLocalizations.of(context)!.pages} (${percentage.toStringAsFixed(1)}%)',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: widget.isDarkMode ? Colors.white70 : Colors.black87,
+                  fontSize: 14.0,
+                ),
               ),
               value: sura.isCompleted,
               onChanged: (value) async {
                 setState(() => sura.isCompleted = value ?? false);
                 await _updateProgress(sura);
-
                 _checkCompletion(primaryColor);
               },
             ),
@@ -225,7 +212,7 @@ class HomeScreenState extends State<HomeScreen> {
     try {
       final db = await _dbHelper.database;
       await db.delete('selected_suras');
-      _loadData(); // إعادة تحميل البيانات لتحديث الواجهة
+      _loadData();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -262,7 +249,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
             position: PopupMenuPosition.under,
             onSelected: (Locale locale) async {
-              await DatabaseHelper().setSelectedLanguage(locale.languageCode);
+              await _dbHelper.setSelectedLanguage(locale.languageCode);
               widget.setLocale(locale);
             },
             itemBuilder: (BuildContext context) => [

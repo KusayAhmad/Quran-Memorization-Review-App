@@ -29,7 +29,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   Future<void> _loadLocale() async {
-    String? storedLanguageCode = await DatabaseHelper().getSelectedLanguage();
+    String? storedLanguageCode =
+        await DatabaseHelper.instance.getSelectedLanguage();
     Locale deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
 
     if (storedLanguageCode != null) {

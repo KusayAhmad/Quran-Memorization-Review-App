@@ -17,7 +17,7 @@ class SelectSurasScreen extends StatefulWidget {
 }
 
 class SelectSurasScreenState extends State<SelectSurasScreen> {
-  final DatabaseHelper _dbHelper = DatabaseHelper();
+  final DatabaseHelper _dbHelper = DatabaseHelper.instance;
   List<Sura> _allSuras = [];
   List<Sura> _filteredSuras = [];
   List<int> _selectedIds = [];
@@ -98,8 +98,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       return;
     }
 
-    await _dbHelper
-        .updateSelectedSuras(_selectedIds); // استخدام الدالة المركزية
+    await _dbHelper.updateSelectedSuras(_selectedIds);
 
     if (mounted) {
       Navigator.pop(context, true);
@@ -139,7 +138,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
             onPressed: () {
               showAddSuraDialog(
                 context,
-                _loadAllSuras, // Callback لإعادة تحميل البيانات بعد الإضافة
+                _loadAllSuras,
                 AppLocalizations.of(context)!,
               );
             },
@@ -195,7 +194,7 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                   if (stats['last_reviewed'] != null)
                     Text(
                         'آخر مراجعة: ${DateFormat('yyyy-MM-dd').format(stats['last_reviewed'])}'),
-                  Text('عدد المراجعات: ${stats['total_times']}')
+                  Text('عدد المراجعات: ${stats['total_times'] ?? 0}')
                 ],
               );
             },
@@ -217,17 +216,15 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
                   context,
                   sura,
                   (updatedSura) async {
-                    await _dbHelper.updateSura(
-                        updatedSura); // تحديث السورة في قاعدة البيانات
-                    _loadAllSuras(); // إعادة تحميل البيانات
+                    await _dbHelper.updateSura(updatedSura);
+                    _loadAllSuras();
                   },
                   AppLocalizations.of(context)!,
                 );
               } else if (value == 'delete') {
                 _dbHelper.deleteSura(sura.id);
                 setState(() {
-                  _filteredSuras
-                      .removeWhere((s) => s.id == sura.id); // تحديث الواجهة
+                  _filteredSuras.removeWhere((s) => s.id == sura.id);
                 });
               }
             },

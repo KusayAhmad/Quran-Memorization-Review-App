@@ -3,6 +3,10 @@ import 'package:quran_review_app/models/sura_model.dart';
 import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
+  static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
+
+  DatabaseHelper._privateConstructor();
+
   static final _databaseName = "QuranReview.db";
   static final _databaseVersion = 5;
 
@@ -18,6 +22,7 @@ class DatabaseHelper {
   static final tablePreferences = 'preferences';
   static final columnPreferenceName = 'name';
   static final columnPreferenceValue = 'value';
+
   static Database? _database;
   static final tableStats = 'sura_stats';
 
@@ -56,22 +61,15 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-  CREATE TABLE selected_suras (
-    id INTEGER,
-    name TEXT NOT NULL,
-    pages REAL NOT NULL,
-    reviewed BOOLEAN DEFAULT 0,
-    last_reviewed_date TEXT,
-    total_reviewed_times INTEGER DEFAULT 0
-  )
-''');
-
-    await db.execute('''
-  CREATE TABLE IF NOT EXISTS daily_progress (
-    date TEXT PRIMARY KEY,
-    completed_pages REAL DEFAULT 0
-  )
-''');
+      CREATE TABLE selected_suras (
+        id INTEGER,
+        name TEXT NOT NULL,
+        pages REAL NOT NULL,
+        reviewed BOOLEAN DEFAULT 0,
+        last_reviewed_date TEXT,
+        total_reviewed_times INTEGER DEFAULT 0
+      )
+    ''');
 
     await db.execute('''
       CREATE TABLE $tablePreferences (
@@ -81,13 +79,13 @@ class DatabaseHelper {
     ''');
 
     await db.execute('''
-  CREATE TABLE $tableStats (
-    sura_id INTEGER PRIMARY KEY,
-    last_reviewed_date TEXT,
-    total_reviewed_times INTEGER DEFAULT 0,
-    FOREIGN KEY (sura_id) REFERENCES $tableSuras(id)
-  )
-''');
+      CREATE TABLE $tableStats (
+        sura_id INTEGER PRIMARY KEY,
+        last_reviewed_date TEXT,
+        total_reviewed_times INTEGER DEFAULT 0,
+        FOREIGN KEY (sura_id) REFERENCES $tableSuras(id)
+      )
+    ''');
   }
 
   Future<int> insertSura({required String name, required double pages}) async {
@@ -148,8 +146,7 @@ class DatabaseHelper {
           'id': sura.id,
           'name': sura.name,
           'pages': sura.pages,
-          'reviewed':
-              sura.isCompleted ? 1 : 0, // استخدام القيمة الفعلية من السورة
+          'reviewed': sura.isCompleted ? 1 : 0,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
@@ -182,18 +179,12 @@ class DatabaseHelper {
 
   Future<void> updateSuraReviewedStatus(int suraId, bool isCompleted) async {
     final db = await database;
-
-    // تحديث حالة المراجعة فقط
     await db.update(
       'selected_suras',
       {'reviewed': isCompleted ? 1 : 0},
       where: 'id = ?',
       whereArgs: [suraId],
     );
-
-    // if (isCompleted) {
-    //   await updateSuraStats(suraId); // تحديث الإحصائيات المنفصلة
-    // }
   }
 
   Future<Map<String, dynamic>> getSuraStats(int suraId) async {
@@ -215,7 +206,7 @@ class DatabaseHelper {
 
   Future<void> updateSuraStats(int suraId) async {
     final db = await database;
-    final currentDate = DateTime.now().toIso8601String();
+    final currentDate = _formatDate(DateTime.now());
 
     await db.rawInsert('''
     INSERT INTO $tableStats (
@@ -247,7 +238,7 @@ class DatabaseHelper {
   }
 
   String _formatDate(DateTime date) {
-    return "${date.year}-${date.month}-${date.day}";
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
   }
 
   Future<String?> getPreference(String name) async {
@@ -291,14 +282,12 @@ class DatabaseHelper {
         : 1;
   }
 
-// إضافة دالة لتحميل جميع السور
   Future<List<Sura>> getAllSuras() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(tableSuras);
     return maps.map((map) => Sura.fromMap(map)).toList();
   }
 
-// إضافة دالة لتحديث السور المختارة
   Future<void> updateSelectedSuras(List<int> selectedIds) async {
     final db = await database;
     await db.delete('selected_suras');
@@ -311,7 +300,6 @@ class DatabaseHelper {
           'name': sura[0][columnName],
           'pages': sura[0][columnPages],
           'reviewed': 0,
-          // 'reviewed': resetReviewed ? 0 : sura[0]['reviewed'], // ✅ التحكم في إعادة التعيين
           'last_reviewed_date': null,
           'total_reviewed_times': 0,
         });
@@ -321,18 +309,10 @@ class DatabaseHelper {
 
   Future<void> updateSuraStatsForAll(List<int> suraIds) async {
     final db = await database;
-    final currentDate = DateTime.now().toIso8601String();
+    final currentDate = _formatDate(DateTime.now());
 
     for (int suraId in suraIds) {
-      // تحقق مما إذا كانت السورة قد تمت مراجعتها مسبقًا اليوم
-      final existing = await db.query(
-        tableStats,
-        where: 'sura_id = ? AND last_reviewed_date = ?',
-        whereArgs: [suraId, currentDate],
-      );
-
-      if (existing.isEmpty) {
-        await db.rawInsert('''
+      await db.rawInsert('''
       INSERT INTO $tableStats (
         sura_id, 
         last_reviewed_date, 
@@ -343,8 +323,7 @@ class DatabaseHelper {
       DO UPDATE SET
         last_reviewed_date = excluded.last_reviewed_date,
         total_reviewed_times = total_reviewed_times + 1
-      ''', [suraId, currentDate]);
-      }
+    ''', [suraId, currentDate]);
     }
   }
 }
