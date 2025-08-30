@@ -37,5 +37,6 @@
         "example": "12.50"
       }
     }
-  }
+  },
+  "sortByLastReviewed": "Sort by Last Reviewed"
 }

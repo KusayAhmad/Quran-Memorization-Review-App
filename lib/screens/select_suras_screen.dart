@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:quran_review_app/database/database_helper.dart';
 import 'package:quran_review_app/models/sura_model.dart';
 import 'package:quran_review_app/utils/sura_dialogs.dart';
+import 'package:quran_review_app/models/sura_stats_model.dart';
 
 class SelectSurasScreen extends StatefulWidget {
   final Function(Locale) setLocale;
@@ -23,7 +24,8 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   List<int> _selectedIds = [];
   String _searchText = '';
   String _sortMode = 'asc';
-
+  final Map<int, SuraStats> _suraStats = {};
+// TODO: Add تطبيق آخر مقترحات شاتجب
   @override
   void initState() {
     super.initState();
@@ -51,11 +53,31 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
   }
 
   void _loadSelectedSuras() async {
+    // 1) احصل على السور المختارة
     final selectedSuras = await _dbHelper.getSelectedSuras();
+
+    // 2) تفريغ الخريطة السابقة (اختياري)
+    _suraStats.clear();
+
+    // 3) لكل سورة، اجلب معلومات الإحصائيات من sura_stats
+    for (var sura in selectedSuras) {
+      final stats = await _dbHelper.getSuraStats(sura.id);
+      if (stats != null) {
+        _suraStats[sura.id] = stats;
+      }
+    }
+
+    // 4) حدث واجهة المستخدم
     setState(() {
+      // احفظ قائمة المعرفات
       _selectedIds = selectedSuras.map((s) => s.id).toList();
+      // إذا كنت تستعمل _allSuras يمكنك تصفيتها لجلب ما هو مختار فقط:
+      _filteredSuras = _allSuras.where((s) => _selectedIds.contains(s.id)).toList();
+      _sortFilteredSuras(); // إعادة فرز القائمة حسب الوضع المختار
     });
   }
+
+
 
   void _filterSuras(String searchText) {
     setState(() {
@@ -81,10 +103,15 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
 
   void _sortFilteredSuras() {
     _filteredSuras.sort((a, b) {
-      int aNum = int.tryParse(a.name) ?? 0;
-      int bNum = int.tryParse(b.name) ?? 0;
-
-      return _sortMode == 'asc' ? aNum.compareTo(bNum) : bNum.compareTo(aNum);
+      if (_sortMode == 'last_reviewed') {
+        return _suraStats[a.id]?.lastReviewedDate.compareTo(
+                _suraStats[b.id]?.lastReviewedDate ?? DateTime(2000)) ??
+            0;
+      } else {
+        int aNum = int.tryParse(a.name) ?? 0;
+        int bNum = int.tryParse(b.name) ?? 0;
+        return _sortMode == 'asc' ? aNum.compareTo(bNum) : bNum.compareTo(aNum);
+      }
     });
   }
 
@@ -120,7 +147,12 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
         backgroundColor: primaryColor,
         actions: [
           PopupMenuButton<String>(
-            onSelected: _sortSuras,
+            onSelected: (String value) {
+              setState(() {
+                _sortMode = value;
+                _sortFilteredSuras();
+              });
+            },
             icon: const Icon(Icons.sort),
             itemBuilder: (BuildContext context) => [
               PopupMenuItem<String>(
@@ -130,6 +162,10 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
               PopupMenuItem<String>(
                 value: 'desc',
                 child: Text(AppLocalizations.of(context)!.sortZA),
+              ),
+              PopupMenuItem<String>(
+                value: 'last_reviewed',
+                child: Text(AppLocalizations.of(context)!.sortByLastReviewed),
               ),
             ],
           ),
@@ -182,19 +218,20 @@ class SelectSurasScreenState extends State<SelectSurasScreen> {
       itemCount: _filteredSuras.length,
       itemBuilder: (context, index) {
         final sura = _filteredSuras[index];
+        final stats = _suraStats[sura.id];  // سحب الإحصائيات من الخريطة
+
         return CheckboxListTile(
           title: Text(sura.name),
-          subtitle: FutureBuilder<Map<String, dynamic>>(
-            future: _dbHelper.getSuraStats(sura.id),
-            builder: (context, snapshot) {
-              final stats = snapshot.data ?? {};
+          subtitle: Builder(
+            builder: (context) {
+              if (stats == null) {
+                return const Text('لا توجد بيانات مراجعة.');
+              }
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (stats['last_reviewed'] != null)
-                    Text(
-                        'آخر مراجعة: ${DateFormat('yyyy-MM-dd').format(stats['last_reviewed'])}'),
-                  Text('عدد المراجعات: ${stats['total_times'] ?? 0}')
+                  Text('آخر مراجعة: ${stats.lastReviewedDate.toLocal().toString().split(' ').first}'),
+                  Text('عدد المراجعات: ${stats.totalReviewedTimes}'),
                 ],
               );
             },

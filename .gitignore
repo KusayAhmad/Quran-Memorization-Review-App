@@ -10,6 +10,10 @@
 *.tmp
 *.temp
 *.bak
+*~
+.thumbs.db
+Thumbs.db
+desktop.ini
 
 # ------------------------------
 # 🚀 IDE & Editor Settings
@@ -21,6 +25,11 @@
 *.iws
 *.sublime-workspace
 *.sublime-project
+.history/
+.atom/
+.vim/
+*.kate-swp
+.netbeans/
 
 # ------------------------------
 # 🎯 Flutter / Dart / Pub Related
@@ -33,6 +42,13 @@
 /build/
 **/doc/api/
 **/ios/Flutter/.last_build_id
+.metadata
+.packages
+pubspec.lock
+.fvm/
+coverage/
+test/.test_coverage.dart
+coverage_helper_test.dart
 
 # ------------------------------
 # 📱 Android Specific
@@ -47,6 +63,13 @@ android/app/build/
 android/app/debug/
 android/app/profile/
 android/app/release/
+android/gradlew
+android/gradlew.bat
+android/gradle/
+android/key.properties
+android/app/google-services.json
+*.jks
+*.keystore
 
 # ------------------------------
 # 🍏 iOS & macOS Specific
@@ -59,15 +82,20 @@ ios/Flutter/Flutter.podspec
 ios/Flutter/Generated.xcconfig
 ios/Flutter/flutter_export_environment.sh
 ios/ServiceDefinitions.json
+ios/Runner/GoogleService-Info.plist
+ios/*.mobileprovision
+ios/*.p12
 macos/Flutter/ephemeral/
 macos/Flutter/Generated.xcconfig
 macos/Flutter/flutter_export_environment.sh
 macos/ServiceDefinitions.json
+macos/Runner/GoogleService-Info.plist
 
 # ------------------------------
 # 🌍 Web Specific
 # ------------------------------
 web/.dart_tool/
+web/canvaskit/
 
 # ------------------------------
 # 🐧 Linux Specific
@@ -86,7 +114,40 @@ app.*.symbols
 app.*.map.json
 
 # ------------------------------
-# 🔹 Miscellaneous
+# �️ Build & Cache Files
+# ------------------------------
+.dart_tool/
+build/
+**/build/
+.flutter-plugins-dependencies
+.flutter-plugins
+pubspec.lock
+.fvm/flutter_sdk
+
+# ------------------------------
+# 🔒 Environment & Secrets
+# ------------------------------
+.env
+.env.local
+.env.production
+.env.staging
+*.env
+secrets.json
+firebase_options.dart
+google-services.json
+GoogleService-Info.plist
+
+# ------------------------------
+# 📊 Testing & Analysis
+# ------------------------------
+coverage/
+test/coverage/
+.nyc_output
+lcov.info
+*.lcov
+
+# ------------------------------
+# �🔹 Miscellaneous
 # ------------------------------
 *.class
 *.jar
@@ -96,3 +157,34 @@ app.*.map.json
 *.sqlite
 *.sqlite3
 migrate_working_dir/
+.firebase/
+firebase.json
+.firebaserc
+*.pid
+*.seed
+*.pid.lock
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ------------------------------
+# 📄 Documentation & Media
+# ------------------------------
+*.pdf
+*.doc
+*.docx
+!/README.pdf
+!/docs/**/*.pdf
+
+# ------------------------------
+# 🎮 Game Engine Files (if applicable)
+# ------------------------------
+*.unity
+*.unitypackage
+
+# ------------------------------
+# 🔄 Version Control
+# ------------------------------
+.svn/
+.hg/
+.bzr/

@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:quran_review_app/models/sura_model.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:quran_review_app/models/sura_stats_model.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._privateConstructor();
@@ -187,21 +188,17 @@ class DatabaseHelper {
     );
   }
 
-  Future<Map<String, dynamic>> getSuraStats(int suraId) async {
+  Future<SuraStats?> getSuraStats(int suraId) async {
     final db = await database;
-    final stats = await db.query(
+    final result = await db.query(
       tableStats,
       where: 'sura_id = ?',
       whereArgs: [suraId],
     );
-
-    return stats.isNotEmpty
-        ? {
-            'last_reviewed':
-                DateTime.parse(stats[0]['last_reviewed_date'] as String),
-            'total_times': stats[0]['total_reviewed_times'] as int
-          }
-        : {'last_reviewed': null, 'total_times': 0};
+    if (result.isNotEmpty) {
+      return SuraStats.fromMap(result.first);
+    }
+    return null;
   }
 
   Future<void> updateSuraStats(int suraId) async {
